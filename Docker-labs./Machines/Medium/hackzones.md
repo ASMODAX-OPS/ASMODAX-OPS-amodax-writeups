@@ -74,7 +74,7 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 [####>---------------] - 6m    499477/2283919 1358/s  http://hackzones.hl/ 
 [####################] - 5s   2283919/2283919 501409/s http://hackzones.hl/uploads/ => Directory listing (add --scan-dir-listings to scan)   
 ```
-# feroxbuster
+# (feroxbuster)
  herramienta que estamos usando para hacer un escaneo de directorios en un sitio web y encontrar archivos o rutas ocultas.
 
 (-u 'http://<ip>/')
@@ -108,5 +108,13 @@ Esta opción le dice a Feroxbuster que no guarde el estado de las sesiones entre
 La opción -d establece el número máximo de intentos de directorio a realizar. En este caso, 5. Esto puede ser útil si se quiere evitar una sobrecarga del servidor durante las pruebas.
 
 Mas ejemplos de uso de esta herramienta --> (https://epi052.github.io/feroxbuster-docs/docs/examples/)
+
+# Continucion de maquina 
+
+Si vamos a 'http://hackzones.hl/dashboard.html' podremos ver lo siguiente:
+<img width="1917" height="929" alt="image" src="https://github.com/user-attachments/assets/34ef7b6d-0568-493f-96cc-70e1e1cce4d1" />
+
+DAREMOS CLICK EN LA FOTO DONDE DICE ADMIN, nos aparera los siguiente
+<img width="1158" height="726" alt="image" src="https://github.com/user-attachments/assets/41fb0f22-2671-443d-afba-2a3eba41c983" />
 
 
