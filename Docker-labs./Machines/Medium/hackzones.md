@@ -31,4 +31,46 @@ echo '172.17.0.2 HackZones.hl' >> /etc/hosts
 ```
 <img width="1916" height="933" alt="image" src="https://github.com/user-attachments/assets/fc93093c-63c6-4714-8b4d-4aafde8e675b" />
 
-Este login puede ser vulnerable a intecion SQL, lo probamos y veremos que no es posible, Buscaremos otra manera realizandole Fuzzing ala web
+Este login puede ser vulnerable a intecion SQL, lo probamos y veremos que no es posible, Buscaremos otra manera realizandole Fuzzing web
+
+#Fuzzing Web
+Usaremos esta herramienta para realizar, De tal manera que no sepan usarla os dejo el github de la herramienta --> (https://github.com/epi052/feroxbuster.git) 
+
+```ruby
+feroxbuster -u 'http://hackzones.hl/' -w /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-lowercase-2.3-medium.txt -s 200,301,302 -x txt,php,bak,db,py,html,js,jpg,png,git -t 200 --random-agent --no-state -d 5
+```
+```bash
+                                                                                                                                                                                                                                            
+ ___  ___  __   __     __      __         __   ___
+|__  |__  |__) |__) | /  `    /  \ \_/ | |  \ |__
+|    |___ |  \ |  \ | \__,    \__/ / \ | |__/ |___
+by Ben "epi" Risher 🤓                 ver: 2.11.0
+───────────────────────────┬──────────────────────
+ 🎯  Target Url            │ http://HackZones.hl/
+ 🚀  Threads               │ 200
+ 📖  Wordlist              │ /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-lowercase-2.3-medium.txt
+ 👌  Status Codes          │ [200, 301, 302]
+ 💥  Timeout (secs)        │ 7
+ 🦡  User-Agent            │ Random
+ 💉  Config File           │ /etc/feroxbuster/ferox-config.toml
+ 🔎  Extract Links         │ true
+ 💲  Extensions            │ [txt, php, bak, db, py, html, js, jpg, png, git]
+ 🏁  HTTP methods          │ [GET]
+ 🔃  Recursion Depth       │ 5
+ 🎉  New Version Available │ https://github.com/epi052/feroxbuster/releases/latest
+───────────────────────────┴──────────────────────
+ 🏁  Press [ENTER] to use the Scan Management Menu™
+──────────────────────────────────────────────────
+200      GET      181l      450w     5671c http://hackzones.hl/dashboard.html
+200      GET       23l      163w     1377c http://hackzones.hl/upload.php
+301      GET        9l       28w      314c http://hackzones.hl/uploads => http://hackzones.hl/uploads/
+200      GET       23l       62w      860c http://hackzones.hl/index.html
+302      GET        0l        0w        0c http://hackzones.hl/authenticate.php => index.html?error=1
+200      GET       77l      135w     1246c http://hackzones.hl/styles.css
+200      GET       23l       62w      860c http://hackzones.hl/
+[####>---------------] - 6m   1037419/4567992 16m     found:7       errors:1234   
+[####>---------------] - 6m    544016/2283919 1479/s  http://HackZones.hl/ 
+[####>---------------] - 6m    499477/2283919 1358/s  http://hackzones.hl/ 
+[####################] - 5s   2283919/2283919 501409/s http://hackzones.hl/uploads/ => Directory listing (add --scan-dir-listings to scan)   
+```
+
