@@ -138,7 +138,7 @@ ya con esto tenemos la ejecucion de comandos antes de ejecutarlos nos pondremos 
 
 
 # Escalada De Privilegios 
-Tratamineto de terminal
+Tratamiento de terminal
 ```bash
 script /dev/null -c bash 
 CTRL + Z 
