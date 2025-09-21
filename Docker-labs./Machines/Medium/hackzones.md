@@ -149,7 +149,7 @@ export TERM=xterm
 export SHELL=bash
 
 Revisamos  los usurios del sistema y encontramos solo uno
-
+```bash
 root:x:0:0:root:/root:/bin/bash
 daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
 bin:x:2:2:bin:/bin:/usr/sbin/nologin
@@ -175,7 +175,7 @@ messagebus:x:101:103::/nonexistent:/usr/sbin/nologin
 systemd-resolve:x:996:996:systemd Resolver:/:/usr/sbin/nologin
 sshd:x:102:65534::/run/sshd:/usr/sbin/nologin 
 mrrobot:x:1000:1000::/home/mrRobot:/bin/bash <-- Unico usuario 
-
+```
 Como no temos acceso al directorio como 'mrRobot', revisando un poco en el sistema nos encontramos un archivo en '/tmp' y tras verlo nos damos cuenta que tiene subdominios que despues de agregarlos al archivo '/etc/hosts' y revisarlos no dan mucha imformacion, miraremos un poco mas que nos podemos encontrar, encontramos un script en '/var/www/html/supermegaultrasecretfolder'
 
 cat secret.sh
