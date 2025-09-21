@@ -139,7 +139,7 @@ ya con esto tenemos la ejecucion de comandos antes de ejecutarlos nos pondremos 
 
 # Escalada De Privilegios 
 Tratamineto de terminal
-
+```bash
 script /dev/null -c bash 
 CTRL + Z 
 stty raw -echo; fg
@@ -147,7 +147,7 @@ reset xterm
 stty rows 38 columns 168
 export TERM=xterm
 export SHELL=bash
-
+```
 Revisamos  los usurios del sistema y encontramos solo uno
 ```bash
 root:x:0:0:root:/root:/bin/bash
