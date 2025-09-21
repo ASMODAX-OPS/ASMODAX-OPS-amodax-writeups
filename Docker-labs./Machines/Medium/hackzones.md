@@ -29,4 +29,6 @@ Se observa que el dominio 'HackZones.hl' en el reporte que nos da 'nmap', lo pod
 ```ruby
 echo '172.17.0.2 HackZones.hl' >> /etc/hosts
 ```
+<img width="1916" height="933" alt="image" src="https://github.com/user-attachments/assets/fc93093c-63c6-4714-8b4d-4aafde8e675b" />
 
+Este login puede ser vulnerable a intecion SQL, lo probamos y veremos que no es posible, Buscaremos otra manera realizandole Fuzzing ala web
