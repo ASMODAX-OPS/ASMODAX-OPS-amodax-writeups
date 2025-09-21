@@ -33,7 +33,8 @@ echo '172.17.0.2 HackZones.hl' >> /etc/hosts
 
 Este login puede ser vulnerable a intecion SQL, lo probamos y veremos que no es posible, Buscaremos otra manera realizandole Fuzzing web
 
-#Fuzzing Web
+#Fuzzing Web 
+
 Usaremos esta herramienta para realizar, De tal manera que no sepan usarla os dejo el github de la herramienta --> (https://github.com/epi052/feroxbuster.git) 
 
 ```ruby
