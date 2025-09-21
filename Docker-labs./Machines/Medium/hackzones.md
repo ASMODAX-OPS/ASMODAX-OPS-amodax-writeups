@@ -35,7 +35,7 @@ Este login puede ser vulnerable a intecion SQL, lo probamos y veremos que no es 
 
 # Fuzzing Web 
 
-Usaremos esta herramienta para realizar, De tal manera que no sepan usarla os dejo el github de la herramienta --> (https://github.com/epi052/feroxbuster.git) 
+Usaremos esta herramienta para realizar, De tal manera que no sepan usarla os dejo el github de la herramienta -> (https://github.com/epi052/feroxbuster.git) 
 
 ```ruby
 feroxbuster -u 'http://hackzones.hl/' -w /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-lowercase-2.3-medium.txt -s 200,301,302 -x txt,php,bak,db,py,html,js,jpg,png,git -t 200 --random-agent --no-state -d 5
@@ -74,37 +74,37 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 [####>---------------] - 6m    499477/2283919 1358/s  http://hackzones.hl/ 
 [####################] - 5s   2283919/2283919 501409/s http://hackzones.hl/uploads/ => Directory listing (add --scan-dir-listings to scan)   
 ```
-feroxbuster
+# feroxbuster
  herramienta que estamos usando para hacer un escaneo de directorios en un sitio web y encontrar archivos o rutas ocultas.
 
--u 'http://<ip>/'
+(-u 'http://<ip>/')
 Esto especifica la URL de destino donde Feroxbuster hará el escaneo.
 
--w /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-lowercase-2.3-medium.txt
+(-w /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-lowercase-2.3-medium.txt)
 Este es el archivo de lista de palabras (wordlist) que contiene los posibles nombres de directorios o archivos a intentar.
 
 /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-lowercase-2.3-medium.txt es un archivo incluido en SecLists, una colección de listas de palabras muy comúnmente usada en pruebas de penetración. Esta lista contiene nombres comunes de archivos y directorios que podrían estar en el servidor objetivo.
 
--s 200,301,302
+(-s 200,301,302)
 Esto le dice a Feroxbuster que se concentre en buscar las respuestas HTTP con los códigos de estado 200 (OK), 301 (Redirección permanente) y 302 (Redirección temporal). Estos códigos suelen indicar que la ruta o archivo existe en el servidor.
 
--x txt,php,bak,db,py,html,js,jpg,png,git
+(-x txt,php,bak,db,py,html,js,jpg,png,git)
 Esta opción especifica las extensiones de archivos a buscar. Feroxbuster intentará encontrar directorios o archivos con estas extensiones:
 
 txt, php, bak, db, py, html, js, jpg, png, git
 
 Por ejemplo, buscará index.php, config.bak, file.js, etc.
 
--t 200
+(-t 200) 
 Esta opción establece el número de hilos de concurrentes que Feroxbuster utilizará durante el escaneo. En este caso, 200 hilos, lo que significa que puede hacer hasta 200 solicitudes HTTP simultáneamente para acelerar el proceso.
 
---random-agent
+(--random-agent)
 Utiliza un User-Agent aleatorio para cada solicitud HTTP que envía. Esto ayuda a evitar que el escaneo sea detectado por medidas de protección como firewalls o sistemas de detección de intrusos, ya que las solicitudes parecen provenir de diferentes navegadores.
 
---no-state
+(--no-state)
 Esta opción le dice a Feroxbuster que no guarde el estado de las sesiones entre ejecuciones. Esto significa que cada vez que se ejecute, el escaneo será desde cero, sin recordar directorios encontrados previamente.
 
--d 5
+(-d 5)
 La opción -d establece el número máximo de intentos de directorio a realizar. En este caso, 5. Esto puede ser útil si se quiere evitar una sobrecarga del servidor durante las pruebas.
 
 Mas ejemplos de uso de esta herramienta --> (https://epi052.github.io/feroxbuster-docs/docs/examples/)
