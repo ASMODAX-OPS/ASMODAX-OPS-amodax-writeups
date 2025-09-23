@@ -4,7 +4,7 @@
 
 Enumeracion de Puertos,Servicios y Versiones
 
-```bash
+```ruby
 nmap -Pn -n -sS -p- --open -sV --min-rate 5000 172.17.0.2 -oN nmap 
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-09-22 22:35 EDT
 Nmap scan report for 172.17.0.2
