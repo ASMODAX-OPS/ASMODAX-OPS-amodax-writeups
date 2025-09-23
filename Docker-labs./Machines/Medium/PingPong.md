@@ -2,7 +2,7 @@
 
 
 
-Enumeracion de Puertos,Servicios y Versiones
+# Enumeracion de Puertos,Servicios y Versiones
 
 ```ruby
 nmap -Pn -n -sS -p- --open -sV --min-rate 5000 172.17.0.2 -oN nmap 
@@ -15,4 +15,15 @@ PORT     STATE SERVICE  VERSION
 443/tcp  open  ssl/http Apache httpd 2.4.58 ((Ubuntu))
 5000/tcp open  http     Werkzeug httpd 3.0.1 (Python 3.12.3)
 MAC Address: 02:42:AC:11:00:02 (Unknown)
+```
+Nos iremos al dominio en el puerto 5000 y veremos lo siguiente
+
+<img width="1185" height="757" alt="image" src="https://github.com/user-attachments/assets/5b198aac-481f-43e5-95f3-9dc29549db12" />
+
+analizando mas este ping, nos damos  cuenta que podemos hacer una ejecucion de comandos remotos (Remote Code Execution. Es una vulnerabilidad/condición en la que un atacante puede hacer que un sistema remoto ejecute código arbitrario)
+
+nos ponemos en escucha con Net cat en el puerto 9001
+
+```ruby
+     nc -lvnp 9001
 ```
