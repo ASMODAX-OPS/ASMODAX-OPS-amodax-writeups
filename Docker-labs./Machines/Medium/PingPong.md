@@ -41,3 +41,6 @@ ya tendriamos la conexion con esto:
 
 <img width="476" height="166" alt="image" src="https://github.com/user-attachments/assets/78e83ecd-2821-4bb5-baba-b841fd86163a" />
 
+# Acceso a maquina 
+
+Aremos un tratamiento de la terminal, para no tener problas de ejecuciones 
