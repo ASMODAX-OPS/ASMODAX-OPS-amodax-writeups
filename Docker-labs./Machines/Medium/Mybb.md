@@ -12,6 +12,13 @@ estos nos mostrara los servcios y puertos disponiles
 
 Nos iremos al puerto 80 como nos indica el nmap veremos lo siguiente:
 
-<img width="1334" height="757" alt="image" src="https://github.com/user-attachments/assets/dbc1e32d-e0ea-4a98-a2af-9e1e87563ff5" />
+<img width="1271" height="826" alt="image" src="https://github.com/user-attachments/assets/03052344-ff50-4a68-b4f8-bd0271a47816" />
 
-al darle click a forum nos saltara no estamos autorizados, lo agregaremos a /etc/host ```bash  echo '172.17.0.2 HackZones.hl' >> /etc/hosts ```
+al darle click a forum nos saltara no estamos autorizados, lo agregaremos a /etc/host ```echo '172.17.0.2 HackZones.hl' >> /etc/hosts ```
+
+<img width="1274" height="751" alt="image" src="https://github.com/user-attachments/assets/2cdfbf55-e986-4ddb-8eaf-7fb95b517f30" />
+
+veremos lo siguiente
+
+<img width="1274" height="751" alt="image" src="https://github.com/user-attachments/assets/52e3af2c-fe38-465c-96db-f5f4bbbbbe51" />
+
