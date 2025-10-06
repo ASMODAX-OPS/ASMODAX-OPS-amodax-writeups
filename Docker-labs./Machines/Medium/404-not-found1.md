@@ -139,14 +139,14 @@ La consulta final sería:
 Esto rompe la lógica original y puede devolver todos los usuarios del directorio, bypasseando la autenticación.
 
 
-#Prevencion de este 
+# Prevencion de este 
 
 - Escapar caracteres especiales: *, (, ), |, &, !
 - Validar y sanitizar entradas del usuario.
 - Usar consultas parametrizadas si el lenguaje lo permite.
 - Limitar errores detallados que revelen estructura LDAP.
 
-#Explotacion 
+# Explotacion 
 
 Vamos probando las combinaciones hasta que bingo:
 
