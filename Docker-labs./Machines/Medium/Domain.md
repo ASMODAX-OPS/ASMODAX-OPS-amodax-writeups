@@ -109,5 +109,31 @@ conseguimos una revershell exitosa aprovecharemos las credenciales de bob y nos 
 # tratamiento de tty 
 
 ```bash
-
+script /dev/null -c bash 
+CTRL + Z 
+stty raw -echo; fg
+reset xterm
+stty rows 38 columns 168
+export TERM=xterm
+export SHELL=bash
 ```
+<img width="578" height="171" alt="image" src="https://github.com/user-attachments/assets/0d4e0734-82a8-4e07-ac5d-1d34033a674a" />
+
+
+Pruebo a leer el /etc/shadow desde nano con este procedimiento de GTFObins
+
+<img width="160" height="60" alt="image" src="https://github.com/user-attachments/assets/99047b08-e6e7-4d4e-8106-0c0b7c797082" />
+
+pero no somos capaces de leerlo, sin embargo haciendo la llamada directamente con el binario sí somos capaces de leer el shadow, asi que nos iremos a /etc/passwd.
+
+
+```bash
+root:X:0:0:root:/root:/bin/bash
+```
+Eliminamos la x de la sigueinte manera
+
+```bash
+root:X:0:0:root:/root:/bin/bash
+```
+
+Despues aremos un su root y nos dejara sin pedirnos la password
