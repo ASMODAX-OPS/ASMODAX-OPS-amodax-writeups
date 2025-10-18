@@ -104,7 +104,7 @@ nc -lnvp <port>
 
 <img width="673" height="159" alt="image" src="https://github.com/user-attachments/assets/1810a5c2-5568-43e7-ba38-44ef7ec55070" />
 
-conseguimos una revershell exitosa aprovecharemos las credenciales de bob y nos haremos su bobo
+conseguimos una revershell exitosa aprovecharemos las credenciales de bob y nos haremos su bob
 
 # tratamiento de tty 
 
