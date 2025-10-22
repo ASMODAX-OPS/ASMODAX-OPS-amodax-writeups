@@ -108,5 +108,9 @@ obtenemos credenciales para root asi que escalamos
 
 <img width="556" height="34" alt="image" src="https://github.com/user-attachments/assets/1c3dc843-0c7b-48dd-ad31-a6554fd110bf" />
 
+
+
 Ya con esto podremos ser usuario  root
+
+
 <img width="358" height="82" alt="image" src="https://github.com/user-attachments/assets/b3aefe7e-0224-4fd9-9ae2-ef69e9e77774" />
