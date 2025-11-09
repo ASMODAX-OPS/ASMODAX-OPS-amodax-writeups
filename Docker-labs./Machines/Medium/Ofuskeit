@@ -1,5 +1,0 @@
-# ESCANEO DE PUERTOS
-
-```
-nmap -p- --open -sS --min-rate 5000 -vvv -n -Pn <IP>
-``bash
