@@ -1,3 +1,7 @@
+
+<img width="542" height="284" alt="image" src="https://github.com/user-attachments/assets/a3e4df35-e054-429b-8c0e-4dfb60f88217" />
+
+
 # ESCANEO DE PUERTOS
 
 ```bash
