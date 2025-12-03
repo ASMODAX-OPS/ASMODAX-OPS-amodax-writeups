@@ -33,7 +33,7 @@ Nmap done: 1 IP address (1 host up) scanned in 11.64 seconds
 Veremos que hay un puerto 80 en el que parece alojar una pagina web y despies veremos un puerto 3000 que tiene un servidor js el cual parece bastante interesante, pero vamos a ver que contiene el puerto 80, si entramos veremos una pagina normal sobre mantenimiento informatico, por lo que vamos a realizar un poco de fuzzing a ver que encontramos.
 
 
-#Escalate user admin
+# Escalate user admin
 
 Ya que tiene un servidor JS vamos a probar a meter como extension .js para ver que nos puede encontrar.
 
