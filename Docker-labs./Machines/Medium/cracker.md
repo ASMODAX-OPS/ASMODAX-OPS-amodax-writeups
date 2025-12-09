@@ -122,6 +122,17 @@ solicita un serial para el acceso asi que vere que saco de hacerle `reversing al
 
 <img width="504" height="834" alt="image" src="https://github.com/user-attachments/assets/3a6f541d-9a4b-4ce3-8a8e-7b53128111ac" />
 
+
+
+
+# GHIDRA 
+
+  Ghidra es un potente y versátil marco de ingeniería inversa de software de código abierto desarrollado por la Agencia de Seguridad Nacional (NSA). Lanzado al público en     2019, Ghidra ha ganado rápidamente reconocimiento en las comunidades de ciberseguridad e ingeniería inversa gracias a sus robustas herramientas y su interfaz fácil de       usar. Diseñado para ayudar en el análisis de archivos binarios, Ghidra ofrece un completo conjunto de funciones para descompilar, desensamblar y depurar código, lo que lo   convierte en un activo inestimable para los investigadores de seguridad, analistas e ingenieros de software.
+
+  En esencia, Ghidra permite a los usuarios transformar el código máquina en una representación de alto nivel más comprensible. Este proceso de descompilación simplifica el   examen y la comprensión de sistemas de software complejos, lo cual es crucial para la investigación de vulnerabilidades, el análisis de malware y la depuración de           software. Más allá de la descompilación, Ghidra incluye un sofisticado desensamblador que descompone los archivos ejecutables en código ensamblador, un depurador para el    análisis dinámico y una serie de capacidades de scripting que admiten la automatización y la personalización.
+
+  El desarrollo del software por parte de la NSA subraya su credibilidad y sus capacidades avanzadas, mientras que su naturaleza de código abierto garantiza que siga siendo   accesible para un público amplio. Ghidra es compatible con múltiples plataformas, incluyendo Windows, macOS y Linux, lo que lo convierte en una opción flexible para         diversos entornos operativos. Con una interfaz gráfica de usuario intuitiva y potente, Ghidra simplifica la compleja ingeniería inversa. 
+
 despues de habrilo agregamos un active project y agregaremos el archivo 'PanelAdmin'
 
 <img width="794" height="588" alt="image" src="https://github.com/user-attachments/assets/5b2b294c-4b9a-4338-8759-178a88600701" />
