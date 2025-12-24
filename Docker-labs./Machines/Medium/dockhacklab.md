@@ -8,7 +8,6 @@
 ![Platform: DockerLabs](https://img.shields.io/badge/Plataforma-DockerLabs-blue?style=for-the-badge)
 ![Dificultad: Media](https://img.shields.io/badge/Dificultad-Media-yellow?style=for-the-badge)
 
-Nuestro primer escaneo con nmap no muestra nada inusual.
 ```ruby
  nmap -sV -sS -O -Pn -vvv --min-rate 5000 172.17.0.2
 PORT   STATE SERVICE REASON         VERSION
