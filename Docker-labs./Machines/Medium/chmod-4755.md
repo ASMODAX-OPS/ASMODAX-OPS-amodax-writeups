@@ -1,6 +1,14 @@
 
 <img width="538" height="285" alt="image" src="https://github.com/user-attachments/assets/a3b933ee-234e-4143-8289-04c9d0fbd1c9" />
 
+# 📑 Writeup: Máquina DockHackLab 🚀
+
+![OS: Linux](https://img.shields.io/badge/OS-Linux-orange?style=for-the-badge&logo=linux)
+![Platform: DockerLabs](https://img.shields.io/badge/Plataforma-DockerLabs-blue?style=for-the-badge)
+![Dificultad: Media](https://img.shields.io/badge/Dificultad-Media-yellow?style=for-the-badge)
+
+
+
 # Escaneo de puertos
 
 ```ruby
