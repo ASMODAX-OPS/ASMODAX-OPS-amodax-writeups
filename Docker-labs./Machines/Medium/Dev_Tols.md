@@ -1,7 +1,14 @@
 <img width="538" height="287" alt="image" src="https://github.com/user-attachments/assets/9717e11e-c200-4db3-874f-e7b97b6bccdf" />
 
+# 📑 Writeup: Máquina DockHackLab 🚀
 
-Esacaneo de puertos y servicios 
+![OS: Linux](https://img.shields.io/badge/OS-Linux-orange?style=for-the-badge&logo=linux)
+![Platform: DockerLabs](https://img.shields.io/badge/Plataforma-DockerLabs-blue?style=for-the-badge)
+![Dificultad: Media](https://img.shields.io/badge/Dificultad-Media-yellow?style=for-the-badge)
+
+
+
+# Esacaneo de puertos y servicios 
 
 ```ruby
 nmap -Pn -n -sS -p- --open -sCV --min-rate 5000 172.17.0.2 -oN nmap
