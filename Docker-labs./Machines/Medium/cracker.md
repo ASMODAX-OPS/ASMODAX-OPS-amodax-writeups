@@ -1,5 +1,12 @@
 <img width="474" height="333" alt="image" src="https://github.com/user-attachments/assets/e840739e-371a-4e0e-9d0d-e05956b6899d" />
 
+# 📑 Writeup: Máquina DockHackLab 🚀
+
+![OS: Linux](https://img.shields.io/badge/OS-Linux-orange?style=for-the-badge&logo=linux)
+![Platform: DockerLabs](https://img.shields.io/badge/Plataforma-DockerLabs-blue?style=for-the-badge)
+![Dificultad: Media](https://img.shields.io/badge/Dificultad-Media-yellow?style=for-the-badge)
+
+
 
 # Enumeracion de Puertos,Servicios y versiones 
 
