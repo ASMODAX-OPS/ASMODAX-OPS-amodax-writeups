@@ -2,9 +2,12 @@
 <img width="542" height="284" alt="image" src="https://github.com/user-attachments/assets/a3e4df35-e054-429b-8c0e-4dfb60f88217" />
 
 
+# 📑 Writeup: Máquina DockHackLab 🚀
+
 ![OS: Linux](https://img.shields.io/badge/OS-Linux-orange?style=for-the-badge&logo=linux)
 ![Platform: DockerLabs](https://img.shields.io/badge/Plataforma-DockerLabs-blue?style=for-the-badge)
 ![Dificultad: Media](https://img.shields.io/badge/Dificultad-Media-yellow?style=for-the-badge)
+
 
 # ESCANEO DE PUERTOS
 
