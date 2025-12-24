@@ -1,5 +1,12 @@
 <img width="542" height="300" alt="image" src="https://github.com/user-attachments/assets/5f17e336-57b6-4c19-b353-a5fc0ff79e98" />
 
+# 📑 Writeup: Máquina DockHackLab 🚀
+
+![OS: Linux](https://img.shields.io/badge/OS-Linux-orange?style=for-the-badge&logo=linux)
+![Platform: DockerLabs](https://img.shields.io/badge/Plataforma-DockerLabs-blue?style=for-the-badge)
+![Dificultad: Media](https://img.shields.io/badge/Dificultad-Media-yellow?style=for-the-badge)
+
+
 # INTRODCUCION 
 
 1- Descargamos el zip de la plataforma. Con unzip descomprimimos
