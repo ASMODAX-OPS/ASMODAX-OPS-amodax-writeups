@@ -1,4 +1,11 @@
 
+<img width="510" height="309" alt="image" src="https://github.com/user-attachments/assets/e11f3d4a-ff34-43d2-b0c6-a9a807938c15" />
+
+# 📑 Writeup: Máquina DockHackLab 🚀
+
+![OS: Linux](https://img.shields.io/badge/OS-Linux-orange?style=for-the-badge&logo=linux)
+![Platform: DockerLabs](https://img.shields.io/badge/Plataforma-DockerLabs-blue?style=for-the-badge)
+![Dificultad: Media](https://img.shields.io/badge/Dificultad-Media-yellow?style=for-the-badge)
 
 
 # Esacaneo de puertos y servicios
