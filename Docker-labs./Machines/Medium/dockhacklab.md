@@ -1,3 +1,7 @@
+<img width="519" height="304" alt="image" src="https://github.com/user-attachments/assets/dd7bc047-ea8f-43cd-9cc2-180ceaf50c9d" />
+
+
+
 # 📑 Writeup: Máquina DockHackLab 🚀
 
 ![OS: Linux](https://img.shields.io/badge/OS-Linux-orange?style=for-the-badge&logo=linux)
