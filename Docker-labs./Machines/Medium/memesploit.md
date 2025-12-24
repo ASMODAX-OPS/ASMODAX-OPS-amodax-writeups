@@ -1,6 +1,13 @@
 
 <img width="510" height="313" alt="image" src="https://github.com/user-attachments/assets/589170ed-365a-48f9-a0b4-f90a8f9bf466" />
 
+# 📑 Writeup: Máquina DockHackLab 🚀
+
+![OS: Linux](https://img.shields.io/badge/OS-Linux-orange?style=for-the-badge&logo=linux)
+![Platform: DockerLabs](https://img.shields.io/badge/Plataforma-DockerLabs-blue?style=for-the-badge)
+![Dificultad: Media](https://img.shields.io/badge/Dificultad-Media-yellow?style=for-the-badge)
+
+
 ## Configuracion del Entorno
 ```ruby
 # Comandos para desplegar el laboratorio
