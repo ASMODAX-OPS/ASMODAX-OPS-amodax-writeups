@@ -275,7 +275,7 @@ sudo apt update
 sudo apt install --reinstall libreoffice
 ```
 Una vez echo esto, si intentamos abrir el archivo veremos lo siguiente:
-```ruby
+```html
 libreoffice backup.xlsx
 
 <img width="353" height="162" alt="image" src="https://github.com/user-attachments/assets/e2351ef6-9a12-4f4a-ae8f-14d4985e02f8" />
