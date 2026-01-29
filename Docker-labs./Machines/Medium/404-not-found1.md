@@ -127,7 +127,7 @@ LDAP es un protocolo ligero para acceder y administrar servicios de directorio, 
 
 Ejemplo de consulta LDAP: 
 
-```(&(uid=alanfelipe)(userPassword=123456))```
+```(&(uid=user)(userPassword=123456))```
 
 # ¿Qué es una inyección LDAP?
 La inyección LDAP ocurre cuando una aplicación web no valida correctamente la entrada del usuario y la inserta directamente en una consulta LDAP. Esto permite al atacante manipular la lógica de autenticación o búsqueda, similar a una inyección SQL.
