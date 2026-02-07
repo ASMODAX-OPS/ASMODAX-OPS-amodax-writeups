@@ -1,5 +1,10 @@
 <img width="891" height="453" alt="image" src="https://github.com/user-attachments/assets/15623985-c6a6-4478-834a-edff585489bd" />
 
+# 📑 Writeup: Máquina DockHackLab 🚀
+
+![OS: Linux](https://img.shields.io/badge/OS-Linux-orange?style=for-the-badge&logo=linux)
+![Platform: DockerLabs](https://img.shields.io/badge/Plataforma-DockerLabs-blue?style=for-the-badge)
+![Dificultad: hard](https://img.shields.io/badge/Dificultad-Media-yellow?style=for-the-badge)
 
 #  Escaneo de  servicios  y puertos y serviicios 
 
