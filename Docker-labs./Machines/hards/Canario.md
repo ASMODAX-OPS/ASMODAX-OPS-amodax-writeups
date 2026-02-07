@@ -4,7 +4,7 @@
 
 ![OS: Linux](https://img.shields.io/badge/OS-Linux-orange?style=for-the-badge&logo=linux)
 ![Platform: DockerLabs](https://img.shields.io/badge/Plataforma-DockerLabs-blue?style=for-the-badge)
-![Dificultad: hard](https://img.shields.io/badge/Dificultad-Media-red?style=for-the-badge)
+![Dificultad: hard](https://img.shields.io/badge/Dificultad-hard-%23FF0000?style=for-the-badge)
 
 #  Escaneo de  servicios  y puertos y serviicios 
 
