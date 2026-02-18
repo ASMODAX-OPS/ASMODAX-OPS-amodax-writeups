@@ -34,9 +34,11 @@ Veremos varias cosas interesantes, entre ellas que hay un Minecraft corriendo en
 
 <!-- AutoExecPlugin.txt --> 
 Veremos lo que parece ser un archivo .txt el cual vamos a probar si estuviera subido en el servidor.
-```
 
 URL = http://<IP>/AutoExecPlugin.txt
+
+```
+
 ```ruby
 Info:
 package me.vuln.autoexec;
