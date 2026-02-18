@@ -2,18 +2,22 @@
 
 ![OS: Linux](https://img.shields.io/badge/OS-Linux-orange?style=for-the-badge&logo=linux)
 ![Platform: DockerLabs](https://img.shields.io/badge/Plataforma-DockerLabs-blue?style=for-the-badge)
-![Dificultad: hard](https://img.shields.io/badge/Dificultad-hard-%23FF0000?style=for-the-badge)
+![Dificultad: Hard](https://img.shields.io/badge/Dificultad-Hard-%23FF0000?style=for-the-badge)
 
+---
 
-# Escaneo de puertos
-```ruby
+## 🔍 1. Fase de Enumeración
+
+### Escaneo de Puertos
+Iniciamos realizando un escaneo de puertos sobre la dirección IP de la víctima para identificar servicios activos.
+
+```bash
+
+# Identificación rápida de puertos abiertos
 nmap -p- --open -sS --min-rate 5000 -vvv -n -Pn <IP>
 
-
-nmap -sCV -p 172.17.0.2 <IP>
-Info:
-
-Copy
+# Escaneo profundo de versiones y scripts por defecto
+nmap -sCV -p 80,25565 <IP>
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-06-18 04:23 EDT
 Nmap scan report for 172.17.0.2
 Host is up (0.000037s latency).
@@ -28,81 +32,42 @@ MAC Address: 02:42:AC:11:00:03 (Unknown)
 
 Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
 Nmap done: 1 IP address (1 host up) scanned in 6.62 seconds
-Veremos varias cosas interesantes, entre ellas que hay un Minecraft corriendo en el servidor, pero antes de entrar a el, vamos a explorar la pagina web que esta alojada en el puerto 80, si entramos dentro de ella veremos una pagina web de Minecraft como un duplicado de la original en el que se puede realizar la compra del juego, etc... Pero eso no nos interesa, si inspeccionamos el codigo veremos lo siguiente en las ultimas lineas de codigo:
-```
-```bash
-
-<!-- AutoExecPlugin.txt --> 
-Veremos lo que parece ser un archivo .txt el cual vamos a probar si estuviera subido en el servidor.
-
-URL = http://<IP>/AutoExecPlugin.txt
-
 ```
 
+#Resultados del escaneo:
+
+ 80/tcp (HTTP): Apache httpd 2.4.58. El sitio parece haber sido clonado con HTTrack.
+
+ 25565/tcp (Minecraft): Servidor Minecraft activo versión 1.12.2.
+
+# Análisis Web e Infiltración
+Al explorar el puerto 80, encontramos una página web de Minecraft. Inspeccionando el código fuente de la página, localizamos un comentario sospechoso en las últimas líneas:
+
+Navegamos a la URL: http://<IP>/AutoExecPlugin.txt y encontramos el código fuente de un plugin de Java (.java).
+
+Análisis del Código:
+El código revela una función de chat que permite ejecutar comandos del sistema si el mensaje comienza con el prefijo !exec:
 ```ruby
-Info:
-package me.vuln.autoexec;
-
-import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.plugin.java.JavaPlugin;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
-public class AutoExecPlugin extends JavaPlugin implements Listener {
-
-    @Override
-    public void onEnable() {
-        getLogger().info("AutoExecPlugin habilitado");
-        getServer().getPluginManager().registerEvents(this, this);
-    }
-
-    @EventHandler
-    public void onPlayerChat(AsyncPlayerChatEvent event) {
-        String msg = event.getMessage();
-        Player player = event.getPlayer();
-
-        // Detecta comando con prefijo !exec
-        if (msg.startsWith("!exec ")) {
-            event.setCancelled(true); // CANCELA que se muestre el mensaje en el chat
-
-            String command = msg.substring(6); // Quitar "!exec " del mensaje
-
-            try {
-                // Ejecutar comando en la consola del servidor
-                Process proc = Runtime.getRuntime().exec(command);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-
-                StringBuilder output = new StringBuilder();
-                String line;
-
-                while ((line = reader.readLine()) != null) {
-                    output.append(line).append("\n");
-                }
-
-                proc.waitFor();
-
-                // Enviar salida del comando al jugador que ejecutÃ³ el chat
-                player.sendMessage("Â§c[Output]:\n" + output.toString());
-
-            } catch (Exception e) {
-                player.sendMessage("Â§4Error ejecutando comando: " + e.getMessage());
-            }
-        }
+@EventHandler
+public void onPlayerChat(AsyncPlayerChatEvent event) {
+    String msg = event.getMessage();
+    if (msg.startsWith("!exec ")) {
+        String command = msg.substring(6); 
+        try {
+            // EJECUCIÓN CRÍTICA: Command Injection
+            Process proc = Runtime.getRuntime().exec(command); 
+            // ... captura de salida y envío al jugador
+        } catch (Exception e) { ... }
     }
 }
 ```
+🎮 2. Instalación del Cliente Minecraft
+Para interactuar con el servidor, instalamos TLauncher (versión gratuita para Linux).
 
-Por lo que vemos si existe, esto es una clase de JAVA la cual nos esta dando una pista de que si esto estuviera en el servidor de minecraft como un plugin puede ser muy vulnerable ya que puede ejecutar comandos del sistema dentro del propio servidor del juego, por lo que vamos a descargarnos minecraft para meternos en dicho servidor.
+Descarga: https://tlauncher.org/
 
-# Instalación Minecraft (Gratis)
-Vamos a ir al siguiente enlace en la pagina del TLauncher de Minecraft, es para jugar Minecraft gratis.
-# URL -> https://tlauncher.org/
+Instalación:
+
 
 <img width="694" height="340" alt="image" src="https://github.com/user-attachments/assets/b200b6fa-8312-47c5-b495-6d1e8c0fe4bf" />
 
