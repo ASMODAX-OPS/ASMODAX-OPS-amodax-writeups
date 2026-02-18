@@ -137,15 +137,16 @@ stty size
 ```
 
 # Para redimensionar la consola ajustando los parametros adecuados
+
+```ruby
 stty rows <ROWS> columns <COLUMNS>
+```
 Una vez echo esto leeremos la flag del usuario y de root.
 
 user.txt
 ```
 8725a65493f812597167d64cf85640e6
 ```
-
-
 root.txt
 ```
 ebcc53fe4fcaffea2fe32390021783c4
