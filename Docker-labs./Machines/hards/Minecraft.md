@@ -122,17 +122,19 @@ root
 Vemos que hemos obtenido de forma exitosa una shell desde la maquina victima mediante un plugin vulnerable desde Minecraft, sanitizaremos la shell.
 
 # Sanitización de shell (TTY)
-script /dev/null -c bash
 
-Copy
-# <Ctrl> + <z>
+```ruby
+script /dev/null -c bash
+<Ctrl> + <z>
 stty raw -echo; fg
 reset xterm
 export TERM=xterm
 export SHELL=/bin/bash
-
-# Para ver las dimensiones de nuestra consola en el Host
+```
+ Para ver las dimensiones de nuestra consola en el Host
+```ruby
 stty size
+```
 
 # Para redimensionar la consola ajustando los parametros adecuados
 stty rows <ROWS> columns <COLUMNS>
