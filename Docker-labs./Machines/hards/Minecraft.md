@@ -1,5 +1,9 @@
 # 📑 Writeup: Máquina DockHackLab 🚀
 
+
+<img width="873" height="429" alt="image" src="https://github.com/user-attachments/assets/066d4b0f-6bcc-439e-a1da-d0c1f07a358b" />
+
+
 ![OS: Linux](https://img.shields.io/badge/OS-Linux-orange?style=for-the-badge&logo=linux)
 ![Platform: DockerLabs](https://img.shields.io/badge/Plataforma-DockerLabs-blue?style=for-the-badge)
 ![Dificultad: Hard](https://img.shields.io/badge/Dificultad-Hard-%23FF0000?style=for-the-badge)
