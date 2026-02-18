@@ -84,23 +84,6 @@ Conexión: En el menú Multiplayer, añadimos el servidor con la dirección <IP_
 🚀 3. Explotación y RCE (Remote Code Execution)
 Una vez dentro del servidor de Minecraft, procedemos a verificar los plugins instalados.
 
-Esto instalara Minecraft y abrira el launcher para iniciarlo, dentro del mismo tendremos que elegir el nombre de usuario que puede ser cualquiera y muy importante la version, en el reporte de nmap vimos que la version es Minecraft 1.12.2 por lo que tendremos que elegir la llamada release 1.12.2 y darle a Install.
-
-Eso instalara todo lo necesario para jugarla, una vez que se haya instalado todo nos pondra Enter the game le daremos y despues de un rato estaremos dentro del menu de Minecraft, nos iremos a la opcion llamada Multiplayer y dentro del mismo configuraremos el servidor de Miencraft desde donde esta corriendo la maquina victima.
-
-Le daremos al boton llamado Add Server y dentro del mismo veremos el Server Name y el Server Address el que nos interesa es configurar el Server Adderess por lo que tendremos que poner la IP de la maquina victima junto con el puerto que es el 25565 quedando de esta forma:
-
-<img width="637" height="459" alt="image" src="https://github.com/user-attachments/assets/d3561a21-b69d-4c95-9b08-635d282be131" />
-
-Le daremos a `Done` y si refrescamos tendremos que ver el server activo asi:
-
-<img width="606" height="183" alt="image" src="https://github.com/user-attachments/assets/4a581914-ba31-4a01-9770-4b9374b4976e" />
-
-Ahora seleccionaremos el servidor y le daremos al boton llamado Join Server esto nos metera dentro del mundo de Minecraft del servidor.
-
-# 🚀 3. Escalada de Privilegios y Explotación (RCE)
-
-Una vez dentro del servidor de Minecraft, procedemos a enumerar los plugins instalados para confirmar la superficie de ataque:
 Escalate Privileges
 Una vez dentro del mundo vamos a probar a listar los plugins de esta forma desde Minecraft.
 ```bash
