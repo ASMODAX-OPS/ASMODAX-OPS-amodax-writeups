@@ -1,3 +1,4 @@
+<img width="890" height="441" alt="image" src="https://github.com/user-attachments/assets/fe289a65-1022-44a6-ba87-8758bd64dec2" />
 
 
 # Fase 1 : Descubrimiento de Superficie (Fast Discovery)
