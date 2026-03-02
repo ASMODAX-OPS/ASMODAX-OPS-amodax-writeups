@@ -57,7 +57,9 @@ Nmap done: 1 IP address (1 host up) scanned in 17.80 seconds
 
 Tras el escaneo de red, se identifica el servicio SMB (Server Message Block) expuesto. Procedo con la fase de enumeración de recursos compartidos (shares) para identificar posibles vectores de exposición de información, configuraciones de seguridad débiles o permisos de lectura/escritura para usuarios no autenticados (Null Sessions).
 
-# .📂 Fase de Enumeración de Recursos Compartidos (SMB)Tras confirmar que el puerto 445 (TCP) se encuentra expuesto, el siguiente paso táctico es identificar los recursos compartidos (shares) disponibles. Para ello, utilizo smbclient, una herramienta fundamental para interactuar con servidores SMB en entornos Linux.
+# .📂 Fase de Enumeración de Recursos Compartidos (SMB)
+
+Tras confirmar que el puerto 445 (TCP) se encuentra expuesto, el siguiente paso táctico es identificar los recursos compartidos (shares) disponibles. Para ello, utilizo smbclient, una herramienta fundamental para interactuar con servidores SMB en entornos Linux.
 
 1. Identificación de Shares (Null Session Check)Primero, intento una Null Session (sesión nula). Esto sirve para verificar si el servidor permite listar recursos sin proporcionar credenciales válidas, un fallo común de configuración.Bash# Listar recursos compartidos de forma anónima
 ```ruby```
@@ -69,9 +71,9 @@ ParámetroFunción
 ```
 smbclient //<IP>/darkshare -N
 ```
-Una vez dentro de la consola interactiva de smbclient, utilizo comandos tipo FTP (ls, cd, get) para exfiltrar archivos de interés que puedan contener vectores de escalada de privilegios o credenciales.
+Una vez dentro de la consola interactiva de smbclient, utilizo comandos tipo FTP `(ls, cd, get)` para exfiltrar archivos de interés que puedan contener vectores de escalada de privilegios o credenciales.
 
-Si ejecutamos esto nos dejara entrar, si listamos el recurso compartido con un ls:
+Si ejecutamos esto nos dejara entrar, si listamos el recurso compartido con un `ls`:
 ```ruby
 smb: \> ls
   .                                   D        0  Sat Dec 14 05:24:32 2024
