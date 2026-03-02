@@ -1,5 +1,10 @@
 <img width="890" height="441" alt="image" src="https://github.com/user-attachments/assets/fe289a65-1022-44a6-ba87-8758bd64dec2" />
 
+# 📑 Writeup: Máquina DockHackLab 🚀
+
+![OS: Linux](https://img.shields.io/badge/OS-Linux-orange?style=for-the-badge&logo=linux)
+![Platform: DockerLabs](https://img.shields.io/badge/Plataforma-DockerLabs-blue?style=for-the-badge)
+![Dificultad: hard](https://img.shields.io/badge/Dificultad-hard-%23FF0000?style=for-the-badge)
 
 # Fase 1 : Descubrimiento de Superficie (Fast Discovery)
 
