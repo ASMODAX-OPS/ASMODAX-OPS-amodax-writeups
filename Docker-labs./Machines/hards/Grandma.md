@@ -375,7 +375,8 @@ Se ejecuta el agente indicando la dirección del proxy y deshabilitando la verif
 ./agent -connect 10.10.10.1:11601 -ignore-cert
 ``` id="agent-run"
 ```
-![Ejecución del agente](https://github.com/user-attachments/assets/7c66e9a8-b0f6-4535-8343-27a87fde8951)
+![Ejecución del agente]<img width="1127" height="29" alt="image" src="https://github.com/user-attachments/assets/9d90e7ea-dbcd-4b71-b1d3-79541c0f2160" />
+
 
 
 
