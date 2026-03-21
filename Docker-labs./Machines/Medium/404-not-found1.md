@@ -10,7 +10,7 @@
 # INTRODCUCION 
 
 1- Descargamos el zip de la plataforma. Con unzip descomprimimos
-```bash
+```ruby
  unzip 404-not-found.zip
 
   Archive:  404-not-found.zip
@@ -18,7 +18,7 @@
   inflating: 404-not-found.tar
 ```
  2- Y ahora desplegamos la máquina
-```bash
+```ruby
 sudo bash auto_deploy.sh 404-not-found.tar
 
 Estamos desplegando la máquina vulnerable, espere un momento.
@@ -40,7 +40,7 @@ haremos un nmap que nos de los puertos,sevicos,OS
 ```ruby
 nmap -p- -Pn -sVCS --min-rate 5000 172.17.0.2
 ```
-``` bash
+```ruby
 (-p) = Escanea todos los puertos 65535 puertos TCP
 (-Pn) = No hace ping,Como ya asumimos que la maquian esta activa no es necesario
 (-sVCS) = este combina 3 tecnicas
@@ -48,9 +48,9 @@ nmap -p- -Pn -sVCS --min-rate 5000 172.17.0.2
   (-sC) = Usa los script NSE por defecto (Detecion basica de vulnerabilidades)
   (-sS) = Escaneo SYN stealth, mas sigiloso que el TCP connect
 ```
-```bash
-
+```ruby
  nmap -p- -Pn -sVCS --min-rate 5000 172.17.0.2
+
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-09-30 21:46 EDT
 Nmap scan report for 172.17.0.2
 Host is up (0.000016s latency).
@@ -97,7 +97,7 @@ wfuzz -c --hw 28 -w /root/tools/SecLists/Discovery/DNS/subdomains-top1million-11
 http://404-not-found.hl -H "Host: FUZZ.404-not-found.hl"
 ```
 
-```bash
+```ruby
 wfuzz : herramienta de fuzzing para descubrir recursos ocultos (subdominios, directorios, parámetros).
   -c	 : colorea la salida en consola para facilitar la lectura.
  --hw 28 : filtra respuestas que tengan exactamente 28 palabras en el cuerpo. Útil para ignorar respuestas genéricas como errores 404 o redirecciones.
