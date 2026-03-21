@@ -374,10 +374,10 @@ Se ejecuta el agente indicando la dirección del proxy y deshabilitando la verif
 ```bash
 ./agent -connect 10.10.10.1:11601 -ignore-cert
 ``` id="agent-run"
-
-![Ejecución del agente](https://github.com/user-attachments/assets/7c66e9a8-b0f6-4535-8343-27a87fde8951)
 ```
----
+![Ejecución del agente](https://github.com/user-attachments/assets/7c66e9a8-b0f6-4535-8343-27a87fde8951)
+
+
 
 ### 📡 Verificación de la conexión
 
@@ -387,7 +387,7 @@ Tras la ejecución, el agente establece una conexión reversa hacia el proxy. De
 ligolo-ng » INFO[...] Agent joined. id=02420a0a0a02 name=drzunder@489a833a8b7e remote="10.10.10.2:53694"
 ``` id="agent-check"
 ```
-![Conexión recibida en el proxy](https://github.com/user-attachments/assets/fa81e50f-c72d-43e5-8b7b-7bc60768e6d7)
+![Conexión recibida en el proxy](<img width="1127" height="29" alt="image" src="https://github.com/user-attachments/assets/10e90139-3317-4a3c-8acf-c4da2dc41c88" />)
 
 
 ### 📌 Resultado
