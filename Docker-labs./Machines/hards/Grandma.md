@@ -388,7 +388,7 @@ Tras la ejecución, el agente establece una conexión reversa hacia el proxy. De
 ligolo-ng » INFO[...] Agent joined. id=02420a0a0a02 name=drzunder@489a833a8b7e remote="10.10.10.2:53694"
 ``` id="agent-check"
 ```
-![Conexión recibida en el proxy](<img width="1127" height="29" alt="image" src="https://github.com/user-attachments/assets/10e90139-3317-4a3c-8acf-c4da2dc41c88" />)
+<img width="1127" height="29" alt="image" src="https://github.com/user-attachments/assets/10e90139-3317-4a3c-8acf-c4da2dc41c88" />
 
 
 ### 📌 Resultado
