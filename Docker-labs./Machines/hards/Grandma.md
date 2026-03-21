@@ -762,10 +762,120 @@ ping 30.30.30.3 -c 1
 
 Se puede comprobar que el TTL asignado es 64, indicando que la máquina está accesible directamente sin ningún nodo intermediario y por otro lado que el sistema subyacente es GNU/Linux. Por lo que, es posible continuar de forma normal con el siguiente reconocimiento inicial.
 
-Reconocimiento inicial (máquina “Node”, 30.30.30.3)
+# 🔍 Reconocimiento inicial — Máquina "Node" (30.30.30.3)
 
-Se realiza un reconocimiento de los servicios disponibles en dos fases. En la primera, se realiza un escaneo de todos los puertos TCP usando nmap para detectar en primera instancia cuales de ellos son accesibles (open), utilizando un escaneo TCP Connect. En el segundo reconocimiento inicial se explica por qué en este caso se realiza un escaneo en modo TCP Connect en lugar de TCP SYN.
-```ruby
+## 📡 Fase 1: Escaneo de puertos
+
+Se realiza un escaneo completo de puertos TCP con el objetivo de identificar servicios expuestos en la máquina objetivo.
+
+Debido al contexto de pivoting (tráfico encapsulado a través de túneles), se utiliza un escaneo **TCP Connect (`-sT`)**, ya que:
+
+- No requiere raw sockets  
+- Es compatible con entornos tunelizados  
+- Resulta más fiable en este escenario que TCP SYN  
+
+```bash id="scan-full-ports"
 sudo nmap -sT -p- -n -Pn 30.30.30.3
 ```
 
+<img width="561" height="188" alt="image" src="https://github.com/user-attachments/assets/8e1842e2-355b-4dd0-a30f-ca8d31ae631f" />
+
+🔎 Fase 2: Enumeración de servicios
+
+Una vez identificados los puertos abiertos, se procede a enumerar los servicios y versiones asociados:
+
+nmap -sCV -p 2222,3000 -n -Pn 30.30.30.3 -oN services-30.30.30.3
+
+<img width="813" height="283" alt="image" src="https://github.com/user-attachments/assets/3e08672f-2f4b-4335-833f-9e3f3e5763f4" />
+
+🚪 Acceso inicial — Máquina "Node" (30.30.30.3)
+🔍 Enumeración de servicios
+
+Se identifican los siguientes servicios:
+
+2222/tcp → SSH (OpenSSH)
+3000/tcp → HTTP (Node.js / Express)
+
+El sistema operativo subyacente es Ubuntu.
+
+🌐 Análisis de la aplicación web
+
+Al acceder al servicio HTTP:
+```
+http://30.30.30.3:3000
+``` id="web-node"
+```
+se observa una página aparentemente vacía.
+
+![Aplicación web](https://github.com/user-attachments/assets/4eee5d8c-92ab-4588-99a5-e0ab3dba42ed)
+
+
+
+## 🍪 Análisis de cookies
+
+Durante la inspección de las peticiones, se identifica una cookie denominada:
+
+```
+profile=Base64(texto)
+```
+![Cookie](https://github.com/user-attachments/assets/071fe383-a151-4fe6-9821-87a645ca1cb8)
+
+El valor de la cookie está codificado en Base64 y corresponde a un identificador UUID dinámico.
+
+Ejemplo de decodificación:
+
+```bash id="decode-cookie"
+echo 'NTQxNTM0MjQtNThkYS00OTg5LTljODktZjcwYzM1NTM5OGI1' | base64 -d
+````
+⚠️ Identificación de vulnerabilidad
+
+Tras múltiples pruebas, se detecta que la cookie profile es vulnerable a Directory Traversal, permitiendo acceder a archivos arbitrarios del sistema.
+
+🧪 Prueba de explotación (lectura de archivos)
+
+Se utiliza Burp Suite para interceptar y manipular la petición:
+
+Se codifica en Base64 un payload que apunta a /etc/passwd
+Se modifica el valor de la cookie profile con dicho payload
+Se envía la petición mediante Repeater
+
+Resultado: acceso exitoso al contenido del archivo /etc/passwd.
+
+👤 Enumeración de usuarios
+
+Del archivo `/etc/passwd` se identifica la existencia del usuario:
+
+node
+
+Siguiendo la misma técnica de Directory Traversal, se intenta acceder a su clave privada SSH ubicada en:
+`/home/node/.ssh/id_rsa`
+
+🔑 Extracción de clave privada
+
+Se codifica el path en Base64 y se inyecta nuevamente en la cookie profile.
+
+El resultado confirma la existencia de la clave privada del usuario.
+
+🚪 Acceso mediante SSH
+
+Una vez obtenida la clave privada, se guarda localmente y se ajustan permisos:
+```
+mousepad node-id_rsa
+chmod 600 node-id_rsa
+ssh -i node-id_rsa node@30.30.30.3 -p 2222
+```
+Se acepta la huella del host y se valida el acceso:
+```
+whoami
+id
+hostname
+```
+📌 Conclusión
+
+A través del análisis de la aplicación web se logró:
+
+Identificar una cookie manipulable codificada en Base64
+Detectar una vulnerabilidad de Directory Traversal
+Leer archivos arbitrarios del sistema
+Extraer credenciales sensibles (clave privada SSH)
+Obtener acceso al sistema mediante SSH
