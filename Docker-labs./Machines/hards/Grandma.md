@@ -12,16 +12,16 @@ La característica crítica de esta infraestructura es que cada nodo intermedio 
 
 Esta configuración es el pilar que permite el movimiento lateral, ya que estas máquinas actúan como "puentes" naturales (gateways) entre zonas que, de otro modo, estarían completamente aisladas entre sí.
 
-Referencia Visual de la Infraestructura
+`Referencia Visual de la Infraestructura
 Para facilitar el seguimiento de la intrusión y mantener una trazabilidad clara del progreso, se ha definido el siguiente esquema. En él se detallan los direccionamientos IP y nombres de host orientativos, los cuales servirán como hoja de ruta a lo largo de esta guía:
-
-2. Objetivos Estratégicos y Metodología
+`
+# 2. Objetivos Estratégicos y Metodología
 El propósito central de este laboratorio es el perfeccionamiento de técnicas de Pivoting. El ejercicio demanda que el operador sea capaz de tunelizar el tráfico desde una red externa hacia segmentos profundos de la infraestructura interna, utilizando cada máquina comprometida como un punto de salto (jump server).
-
+`
 El Flujo del Compromiso
 El éxito del ejercicio se define por la capacidad de comprometer la integridad de todos los activos, progresando de forma escalonada desde la RED 1 hasta alcanzar el objetivo final en la RED 4.
-
-Notas sobre la Escalada de Privilegios
+`
+Nota sobre la Escalada de Privilegios
 Durante la fase de post-explotación en cada nodo, se realizaron auditorías exhaustivas mediante la enumeración de vectores comunes (scripts de automatización, búsqueda de capabilities, SUID, y vulnerabilidades de kernel). Tras el análisis, se determinó lo siguiente:
 
 Enfoque en Movimiento Lateral: No se identificaron vectores de escalada de privilegios críticos o intencionados en los nodos intermedios.
