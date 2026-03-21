@@ -410,3 +410,175 @@ La conexión del agente marca un punto clave en el proceso de pivoting:
 - Se permite interactuar con la red `20.20.20.0/24` como si se estuviera dentro de ella  
 
 El siguiente paso consistirá en configurar la interfaz TUN y comenzar la enumeración de la red interna.
+
+(en el proxy)
+session (seleccionar la 1, la única que hay)
+```
+ifconfig
+```
+<img width="674" height="499" alt="image" src="https://github.com/user-attachments/assets/70de067b-7386-4dcf-adba-7e0bc93ec3bb" />
+
+Una vez conocida la dirección CIDR de la nueva red, es necesario crear una nueva interfaz TUN en la máquina de trabajo para poder redirigir el tráfico de red a esta.
+````
+sudo ip tuntap add user root mode tun ligolo (crear la interfaz TUN llamada "ligolo")
+sudo ip link set ligolo up (levanta la interfaz de red creada)
+ip link show ligolo (comprobar el estado de la interfaz)
+````
+<img width="419" height="51" alt="image" src="https://github.com/user-attachments/assets/d83b0ecc-1607-4692-8ccc-c3ddf38b07ad" />
+
+El siguiente paso consiste en actualizar la tabla de enrutamiento para que el tráfico de la nueva red se enrute a través de la interfaz “ligolo”.
+
+sudo ip route add 20.20.20.0/24 dev ligolo (asociar la dirección CIDR de la nueva red a la interfaz "ligolo" en la tabla de enrutamiento)
+ip route list (listar la tabla de enrutamiento actualizada)
+
+Una vez hecho esto, desde el proxy se da la instrucción para, usando la sesión activa, iniciar el túnel de red a través de la interfaz “ligolo”. Esto se hace para permitir enrutar tráfico hacia la red del agente.
+
+```
+(en el proxy, con la sesión previamente seleccionada)
+start
+```
+<img width="528" height="36" alt="image" src="https://github.com/user-attachments/assets/dc85f659-12e9-4556-922f-9328fbe82263" />
+
+Al realizar esta operación, quedaría comprobar si la siguiente máquina perteneciente a la nueva red es accesible. Para ello, se realiza un ping y se comprueba su TTL, tal y como se ha hecho con la anterior.
+```
+ping 20.20.20.3 -c 1
+```
+<img width="492" height="137" alt="image" src="https://github.com/user-attachments/assets/b0b1a0e9-3e16-4536-8042-43a84e41f4fc" />
+
+Se puede comprobar que el TTL asignado es 64, indicando que la máquina está accesible directamente sin ningún nodo intermediario y por otro lado que el sistema subyacente es GNU/Linux. Por lo que, es posible continuar de forma normal con el siguiente reconocimiento inicial.
+
+
+## 🔍 Reconocimiento inicial — Máquina "Patient" (20.20.20.3)
+
+Una vez establecido el pivoting hacia la red interna (`20.20.20.0/24`), se procede al reconocimiento del nuevo objetivo: **Patient (20.20.20.3)**.
+
+El análisis se realiza en dos fases: descubrimiento de puertos y enumeración de servicios.
+
+---
+
+### 📡 Fase 1: Escaneo de puertos (TCP Connect)
+
+En primer lugar, se realiza un escaneo completo de puertos TCP para identificar servicios accesibles:
+
+```bash
+sudo nmap -sT -p- -n -Pn 20.20.20.3
+``` id="tcp-connect-scan"
+```
+![Escaneo de puertos](https://github.com/user-attachments/assets/1eff2f3f-c13d-4dce-b5c2-8ef0dc2b93aa)
+
+### ⚙️ Justificación del uso de TCP Connect
+
+En este escenario se utiliza el modo **TCP Connect (`-sT`)** en lugar del escaneo SYN (`-sS`) debido a las limitaciones impuestas por el entorno de pivoting con **Ligolo-ng**.
+
+El escaneo SYN requiere acceso a **raw sockets**, lo cual no está disponible cuando el tráfico está encapsulado dentro de un túnel TCP.
+
+Por el contrario, el método TCP Connect:
+
+- Establece una conexión TCP completa mediante `connect()`  
+- No requiere raw sockets  
+- Es compatible con entornos tunelizados  
+- Ofrece mayor fiabilidad en este contexto  
+
+💡 Aunque es menos sigiloso y más lento que SYN scan, resulta más adecuado en escenarios donde el tráfico está encapsulado.
+
+### 🔎 Fase 2: Enumeración de servicios
+
+Una vez identificados los puertos abiertos, se procede a la enumeración detallada de servicios y versiones:
+
+```bash
+nmap -sCV -p 2222,9000 -n -Pn 20.20.20.3 -oN services-20.20.20.3
+``` id="service-scan"
+```
+Este escaneo permite:
+
+- Identificar versiones de servicios  
+- Ejecutar scripts básicos de detección (`-sC`)  
+- Obtener información relevante para futuras fases de explotación  
+
+---
+
+### 🚫 Consideraciones sobre UDP
+
+En este caso, no se realiza escaneo de puertos UDP debido a que:
+
+- No se han identificado servicios relevantes expuestos en UDP  
+- El alcance del laboratorio se centra en servicios TCP  
+- UDP suele requerir tiempos de escaneo mayores sin impacto significativo en este contexto  
+
+---
+
+### 📌 Conclusión
+
+El reconocimiento inicial sobre la máquina **Patient** revela:
+
+- Puertos TCP abiertos en `2222` y `9000`  
+- Servicios activos que serán analizados en fases posteriores  
+- Un punto de entrada potencial dentro de la red interna  
+
+Este análisis sienta las bases para la siguiente fase: **enumeración profunda y posible explotación de servicios**.
+
+
+# Acceso inicial (app, máquina “Patient”, 20.20.20.3)
+
+En este caso se detecta que hay dos puertos abiertos:
+
+    Puerto 2222 (servicio SSH, OpenSSH)
+    Puerto 9000 (servicio HTTP, Werkzeug/Python)
+
+Además, gracias a la detección del servicio, se detecta que el sistema subyacente es Ubuntu.
+
+Tras investigar el servicio 9000 disponible en esta máquina, se puede comprobar que muestra un formulario para subir archivos.
+```
+URL -> http://20.20.20.3:9000
+```
+
+<img width="685" height="467" alt="image" src="https://github.com/user-attachments/assets/d2e04787-36e2-45ee-9697-e3bf8d35631b" />
+
+Al comprobar el código fuente, resulta que el tipo de archivo que acepta esta funcionalidad es “.html”.
+```
+CTRL+U (abrir código fuente de la página)
+URL -> view-source:http://20.20.20.3:9000/
+```
+<img width="566" height="796" alt="image" src="https://github.com/user-attachments/assets/dfb318e9-2b58-4f0d-91bc-6aea55f5a2a1" />
+
+Por lo que se sube un archivo de prueba para ver en qué consiste la funcionalidad presentada. Primero, se crea un archivo HTML muy simple.
+
+# prueba.html
+
+<strong>hola</strong>
+
+Una vez subido este archivo, descarga automáticamente una versión del mismo en PDF.
+<img width="860" height="463" alt="image" src="https://github.com/user-attachments/assets/5696625d-12e8-4939-b58e-8b93f1c84f40" />
+Al comprobar los metadatos de este archivo, en este se encuentra el nombre de la librería encargada de realizar esta transformación: ReportLab PDF Library.
+
+exiftool ~/Downloads/document.pdf
+...
+Producer       : ReportLab PDF Library - www.reportlab.com
+...
+
+<img width="664" height="377" alt="image" src="https://github.com/user-attachments/assets/8bf4f298-b524-4ebe-881b-44afe4fe4608" />
+
+
+No incluye la versión del programa en este caso, pero tras investigar un poco, se descubre que este programa presenta una vulnerabilidad de ejecución remota de código (CVE-2023–33733).
+
+Se ha encontrado también un exploit en GitHub asociado a esta vulnerabilidad que se puede usar para obtener acceso al sistema.
+
+Referencia a CVE: https://nvd.nist.gov/vuln/detail/CVE-2023-33733
+Exploit utilizado: https://github.com/c53elyas/CVE-2023-33733
+
+Antes de poder ejecutar el exploit para establecer una consola inversa (reverse shell), es necesario realizar unas configuraciones en el proxy de Ligolo-NG para poder tener acceso a ciertos recursos. Por ello, se van a realizar las siguientes configuraciones en el proxy:
+
+    Redirección del puerto 1337 para poder establecer una consola inversa el ejecutar el exploit a través del túnel establecido.
+    Recirección del puerto 8008 reservado para futuras transferencias de ficheros a través del túnel establecido.
+```
+(en el proxy, desde la sesión activa correspondiente)
+listener_add --addr 0.0.0.0:1337 --to 127.0.0.1:1337 --tcp (proxy puerto 1337 <-> agente puerto 1337)
+listener_add --addr 0.0.0.0:8008 --to 127.0.0.1:8008 --tcp (proxy puerto 8008 <-> agente puerto 8008)
+listener_list (comprobar redirecciones realizadas)
+```
+<img width="736" height="143" alt="image" src="https://github.com/user-attachments/assets/435a514f-cc4f-48a1-a22c-afa270ac9f06" />
+
+
+En este punto, se establece el puerto 1337 a la escucha, ya que es el puerto que se ha reservado desde el agente para establecer una consola inversa, de tal forma que lo que reciba el agente, será redirigido a este puerto a la escucha en la máquina de trabajo.
+
+rlwrap nc -nvlp 1337
