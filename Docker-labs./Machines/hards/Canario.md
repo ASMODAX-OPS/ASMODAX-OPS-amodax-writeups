@@ -381,6 +381,7 @@ pip3 install pwntools --break-system-packages
 Aunque si no estuviese `pip3` en la máquina se puede usar `subprocess` en la explotación, que es un módulo nativo de python.
 
 Una vez instalado, ejecutamos el exploit:
+
 <img width="356" height="56" alt="image" src="https://github.com/user-attachments/assets/797787cd-266c-48ad-815c-22054ad07877" />
 
 Y ahora podemos ejecutar comandos con:
