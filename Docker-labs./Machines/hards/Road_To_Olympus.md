@@ -162,7 +162,7 @@ Para que nuestro sistema operativo sepa cómo enviar paquetes a la red interna d
 Una vez que el agente se conecta desde Hades, la consola del Proxy mostrará un aviso de conexión. Debes seguir este flujo para activar el túnel:
 
 1. **Seleccionar Sesión:** Escribe `session` y elige el número de ID correspondiente a la conexión de Hades.
-2. **Iniciar Túnel:** Escribe `start` para comenzar el intercambio de paquetes.
+2. **Iniciar Túnel:** Escribe `start` para comenzar el intercambio de paquetes cuando ya tengas el agente conectado a ligolo .
 
 
 
@@ -205,3 +205,22 @@ Al ejecutar el comando anterior, verás en tu terminal de **Hades** un mensaje i
 1. **Proxy Atacante:** Recibe la conexión y crea la sesión.
 2. **Agente Hades:** Mantiene el túnel abierto y redirige el tráfico.
 3. **Resultado:** Ahora podemos gestionar la red interna desde la consola del proxy escribiendo `session`.
+
+
+# 🌊 Máquina Poseidón (20.20.20.3)
+
+Tras activar el túnel con **Ligolo-ng** y añadir la ruta en nuestra máquina atacante (`sudo ip route add 20.20.20.0/24 dev ligolo`), ya tenemos conectividad nativa con la red interna.
+
+## 🔍 Enumeración de Puertos
+
+Gracias a la interfaz `tun`, podemos lanzar `nmap` directamente sin necesidad de `proxychains` o configuraciones adicionales.
+
+### Ejecución del Escaneo
+```bash
+nmap -sT -sCV -n -Pn 20.20.20.3
+📋 Resultados de NmapPuertoEstadoServicioVersión / Detalles22/tcpopensshOpenSSH 8.4p1 Debian 5+deb11u380/tcpopenhttpApache httpd 2.4.54 (Debian)Hallazgos en el Servicio HTTP:Título: Dojos El Papapasito del marServidor: Apache/2.4.54 (Debian)Sistema Operativo: Linux (Debian)🌐 Acceso Directo a la WebA diferencia de otros métodos de pivoting, Ligolo-ng nos permite acceder a los servicios web de forma transparente.MétodoAcciónAcceso WebAbrir directamente http://20.20.20.3 en el navegador.VentajaNo requiere configuración de Proxy SOCKS ni FoxyProxy.
+```
+
+<img width="1910" height="993" alt="image" src="https://github.com/user-attachments/assets/2ff132a4-f65e-4af5-9723-2fff8c600c37" />
+
+                                                                 
