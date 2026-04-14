@@ -36,3 +36,33 @@ OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5
 OS details: Linux 4.15 - 5.19
 Network Distance: 1 hop
 ```
+
+# 🛡️ Reporte de Escaneo Nmap - 10.10.10.2
+
+### 📊 Información del Objetivo
+| Categoría | Detalle |
+| :--- | :--- |
+| **Sistema Operativo** | Linux 4.15 - 5.19 |
+| **Distancia de Red** | 1 salto (hop) |
+| **Título del Sitio Web** | `Not A CTF` |
+
+---
+
+### ⚙️ Configuración del Comando
+| Parámetro | Definición y Uso |
+| :--- | :--- |
+| **`-sV`** | **Detección de versiones:** Identifica el software y la versión de los servicios. |
+| **`-Pn`** | **Omitir Ping:** No verifica si el host responde a ICMP, asume que está activo. |
+| **`-sC`** | **Scripts NSE:** Ejecuta los scripts de enumeración y seguridad por defecto. |
+| **`--min-rate 5000`** | **Velocidad:** Mantiene una tasa mínima de 5000 paquetes por segundo. |
+| **`-O`** | **Huella de S.O.:** Intenta identificar el sistema operativo mediante el stack TCP/IP. |
+| **`--top-ports 50000`** | **Alcance:** Escanea los 50,000 puertos más comunes del ranking de Nmap. |
+
+---
+
+### 🔍 Servicios Detectados
+| Puerto | Estado | Servicio | Versión |
+| :--- | :--- | :--- | :--- |
+| `22/tcp` | ✅ Abierto | SSH | OpenSSH 9.6p1 Ubuntu |
+| `80/tcp` | ✅ Abierto | HTTP | Werkzeug httpd 3.0.4 (Python 3.12.3) |
+| `2222/tcp` | ✅ Abierto | EtherNet/IP-1 | tcpwrapped |
