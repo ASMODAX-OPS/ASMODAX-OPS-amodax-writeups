@@ -122,6 +122,27 @@ Antes de conectar el agente, debemos preparar nuestro entorno local para recibir
 | **Ejecución** | `./proxy -selfcert` | Inicia el servidor usando un certificado auto-firmado para cifrar el túnel. |
 | **Puerto Local** | `11601` (Default) | Puerto que quedará a la escucha (Listening) para la conexión del agente. |
 
+```ruby
+INFO[0000] Loading configuration file ligolo-ng.yaml    
+WARN[0000] daemon configuration file not found. Creating a new one... 
+? Enable Ligolo-ng WebUI? Yes
+? Allow CORS Access from https://webui.ligolo.ng? Yes
+WARN[0002] WebUI enabled, default username and login are ligolo:password - make sure to update ligolo-ng.yaml to change credentials! 
+WARN[0002] Using default selfcert domain 'ligolo', beware of CTI, SOC and IoC! 
+ERRO[0002] Certificate cache error: acme/autocert: certificate cache miss, returning a new certificate 
+INFO[0002] Listening on 0.0.0.0:11601                   
+INFO[0002] Starting Ligolo-ng Web, API URL is set to: http://127.0.0.1:8080 
+WARN[0002] Ligolo-ng API is experimental, and should be running behind a reverse-proxy if publicly exposed. 
+    __    _             __                       
+   / /   (_)___ _____  / /___        ____  ____ _                                                                                                                                                                                           
+  / /   / / __ `/ __ \/ / __ \______/ __ \/ __ `/                                                                                                                                                                                           
+ / /___/ / /_/ / /_/ / / /_/ /_____/ / / / /_/ /                                                                                                                                                                                            
+/_____/_/\__, /\____/_/\____/     /_/ /_/\__, /                                                                                                                                                                                             
+        /____/                          /____/                                                                                                                                                                                              
+                                                                                                                                                                                                                                            
+  Made in France ♥            by @Nicocha30!                                                                                                                                                                                                
+  Version: 0.8.3                                                                     
+```
 ---
 
 ### 🛠️ Configuración de la Interfaz de Red (Networking)
