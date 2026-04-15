@@ -281,13 +281,13 @@ Tras varios intentos, confirmamos que se emplea **SQLite**, ya que estas bases d
 
 Vemos dos tablas interesantes: **"usuarios"** y **"contrasena"**.
 
+
+
 ---
 
 ## 🔓 Decodificación de Credenciales
 
 Extraemos los datos de los usuarios `poseidon` y `megalodon`. Las contraseñas parecen codificadas:
-
-* `$sha1$hahahaha$JZKFCZ2ONJKWOTTNKFTU46SBM5HG2TLHJV5ECZ2NPJEWOTL2IFTU26SFM5GXU23HJVVEKPI=`
 
 Usando el mismo procedimiento que en la máquina Hades (Base32 -> Base64 -> Hex), decodificamos el string:
 
