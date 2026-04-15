@@ -216,11 +216,93 @@ Tras activar el túnel con **Ligolo-ng** y añadir la ruta en nuestra máquina a
 Gracias a la interfaz `tun`, podemos lanzar `nmap` directamente sin necesidad de `proxychains` o configuraciones adicionales.
 
 ### Ejecución del Escaneo
-```bash
+```ruby
 nmap -sT -sCV -n -Pn 20.20.20.3
-📋 Resultados de NmapPuertoEstadoServicioVersión / Detalles22/tcpopensshOpenSSH 8.4p1 Debian 5+deb11u380/tcpopenhttpApache httpd 2.4.54 (Debian)Hallazgos en el Servicio HTTP:Título: Dojos El Papapasito del marServidor: Apache/2.4.54 (Debian)Sistema Operativo: Linux (Debian)🌐 Acceso Directo a la WebA diferencia de otros métodos de pivoting, Ligolo-ng nos permite acceder a los servicios web de forma transparente.MétodoAcciónAcceso WebAbrir directamente http://20.20.20.3 en el navegador.VentajaNo requiere configuración de Proxy SOCKS ni FoxyProxy.
+
+Starting Nmap 7.99 ( https://nmap.org ) 
+Nmap scan report for 20.20.20.3
+Host is up (0.040s latency).
+Not shown: 998 closed tcp ports (conn-refused)
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 8.4p1 Debian 5+deb11u3 (protocol 2.0)
+| ssh-hostkey: 
+|   3072 41:ea:e9:70:88:38:11:2b:1f:36:3a:cb:bd:1a:bb:e2 (RSA)
+|   256 2c:d8:bf:01:05:7e:7a:70:38:7c:7b:f2:ba:54:4b:20 (ECDSA)
+|_  256 20:37:e5:92:15:dc:69:18:dc:09:bb:69:74:6d:ae:c5 (ED25519)
+80/tcp open  http    Apache httpd 2.4.54 ((Debian))
+|_http-title: Dojos El Papapasito del mar
+|_http-server-header: Apache/2.4.54 (Debian)S
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 12.01 seconds
+                                                                 
 ```
+# 🌊 Máquina Poseidón (20.20.20.3)
+
+Tras activar el túnel con **Ligolo-ng** y añadir la ruta en nuestra máquina atacante (`sudo ip route add 20.20.20.0/24 dev ligolo`), ya tenemos conectividad nativa con la red interna.
+
+## 🔍 Enumeración de Puertos
+
+Gracias a la interfaz virtual, podemos lanzar `nmap` directamente sin necesidad de configuraciones adicionales.
+
+| Puerto | Estado | Servicio | Versión / Detalles |
+| :--- | :--- | :--- | :--- |
+| **22/tcp** | open | ssh | OpenSSH 8.4p1 Debian 5+deb11u3 |
+| **80/tcp** | open | http | Apache httpd 2.4.54 (Debian) |
+
+**Análisis del Servicio HTTP:**
+* **Título:** `Dojos El Papapasito del mar`
+* **Servidor:** `Apache/2.4.54 (Debian)`
+* **Sistema Operativo:** Linux (Debian)
+
+---
+
+## 🌐 Acceso Directo a la Web
+
+A diferencia de otros métodos de pivoting, **Ligolo-ng** nos permite acceder a los servicios web de forma transparente abriendo directamente `http://20.20.20.3` en el navegador.
 
 <img width="1910" height="993" alt="image" src="https://github.com/user-attachments/assets/2ff132a4-f65e-4af5-9723-2fff8c600c37" />
 
-                                                                 
+### Análisis del Front-end
+En la barra de navegación vemos tres apartados: **Buscar, Ranking y Perfil**. A nosotros nos interesa "Buscar", ya que nos lleva a un subdirectorio con un sistema de búsqueda.
+
+<img width="1912" height="993" alt="image" src="https://github.com/user-attachments/assets/9e15e60b-fec5-46f3-8c6e-3154bbf1b7ae" />
+
+---
+
+## 🕵️ Explotación de la Base de Datos
+
+Revisamos el código fuente para ver cómo tramita la petición este sistema de búsqueda.
+
+<img width="652" height="366" alt="image" src="https://github.com/user-attachments/assets/3374b8e3-f9c8-406e-95bd-74d5e20bdc6f" />
+
+Podemos observar cómo tramita mediante el método **POST** una petición a un archivo `database.php`. Entendemos que pasa el parámetro del campo de búsqueda y realiza la consulta a la base de datos con él.
+
+Tras varios intentos, confirmamos que se emplea **SQLite**, ya que estas bases de datos usan una tabla interna llamada `sqlite_master`. Introducimos en el campo de búsqueda la consulta: `select name from sqlite_master`.
+
+<img width="1011" height="344" alt="image" src="https://github.com/user-attachments/assets/8fe65f05-6aca-4f85-9c76-e736f6033c31" />
+
+Vemos dos tablas interesantes: **"usuarios"** y **"contrasena"**.
+
+---
+
+## 🔓 Decodificación de Credenciales
+
+Extraemos los datos de los usuarios `poseidon` y `megalodon`. Las contraseñas parecen codificadas:
+
+* `$sha1$hahahaha$JZKFCZ2ONJKWOTTNKFTU46SBM5HG2TLHJV5ECZ2NPJEWOTL2IFTU26SFM5GXU23HJVVEKPI=`
+
+Usando el mismo procedimiento que en la máquina Hades (Base32 -> Base64 -> Hex), decodificamos el string:
+
+```bash
+echo 'JZKFCZ2ONJKWOTTNKFTU46SBM5HG2TLHJV5ECZ2NPJEWOTL2IFTU26SFM5GXU23HJVVEKPI=' | base32 -d | base64 -d | xxd -r -p
+```
+Resultado: Templ02019!
+🔑 Acceso por SSH y EscaladaEntramos por SSH con el usuario megalodon hacia la IP 20.20.20.3. Una vez dentro, verificamos permisos de sudo.UsuarioIP Comando de 
+```ruby
+Escaladamegalodon20.20.20.3
+```
+
+<img width="908" height="624" alt="image" src="https://github.com/user-attachments/assets/86491aab-31cc-414f-8d21-1bf303083533" />
+
