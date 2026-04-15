@@ -238,10 +238,6 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 12.01 seconds
                                                                  
 ```
-# 🌊 Máquina Poseidón (20.20.20.3)
-
-Tras activar el túnel con **Ligolo-ng** y añadir la ruta en nuestra máquina atacante (`sudo ip route add 20.20.20.0/24 dev ligolo`), ya tenemos conectividad nativa con la red interna.
-
 ## 🔍 Enumeración de Puertos
 
 Gracias a la interfaz virtual, podemos lanzar `nmap` directamente sin necesidad de configuraciones adicionales.
