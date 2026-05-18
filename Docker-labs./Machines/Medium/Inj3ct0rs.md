@@ -1,5 +1,12 @@
 # 🛡️ CTF Writeup — Inj3ct0rs
+
+<img width="861" height="420" alt="image" src="https://github.com/user-attachments/assets/92b14944-e97d-4b77-bcea-905ed570fb11" />
+
  
+![OS: Linux](https://img.shields.io/badge/OS-Linux-orange?style=for-the-badge&logo=linux)
+![Platform: DockerLabs](https://img.shields.io/badge/Plataforma-DockerLabs-blue?style=for-the-badge)
+![Dificultad: Media](https://img.shields.io/badge/Dificultad-Media-yellow?style=for-the-badge)
+
 > **Plataforma:** DockerLabs · **Dificultad:** Media · **OS:** Linux (Ubuntu)  
 > **Categorías:** SQL Injection · ZIP Cracking · Sudo Abuse · SSH · Privilege Escalation
  
